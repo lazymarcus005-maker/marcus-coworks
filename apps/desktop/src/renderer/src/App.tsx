@@ -1,5 +1,6 @@
-import { createResource, onMount, Show } from 'solid-js'
+import { createResource, createSignal, onMount, Show } from 'solid-js'
 import { ProjectView } from './components/ProjectView.js'
+import { SettingsModal } from './components/SettingsModal.js'
 import { TabsBar } from './components/TabsBar.js'
 import { Welcome } from './components/Welcome.js'
 import { createProjectsStore } from './state/projects.js'
@@ -7,10 +8,11 @@ import { createProjectsStore } from './state/projects.js'
 export default function App() {
   const store = createProjectsStore()
   const [ready] = createResource(() => store.refresh())
+  const [settingsOpen, setSettingsOpen] = createSignal(false)
 
   onMount(() => {
-    const unsubscribe = setInterval(() => store.refresh(), 5_000)
-    return () => clearInterval(unsubscribe)
+    const timer = setInterval(() => store.refresh(), 5_000)
+    return () => clearInterval(timer)
   })
 
   return (
@@ -24,6 +26,15 @@ export default function App() {
             </div>
           )}
         </Show>
+        <span class="spacer" />
+        <button
+          type="button"
+          class="btn-ghost"
+          aria-label="Settings"
+          onClick={() => setSettingsOpen(true)}
+        >
+          ⚙
+        </button>
       </header>
       <TabsBar store={store} />
       <main class="app-main">
@@ -36,6 +47,9 @@ export default function App() {
           </Show>
         </Show>
       </main>
+      <Show when={settingsOpen()}>
+        <SettingsModal onClose={() => setSettingsOpen(false)} />
+      </Show>
     </div>
   )
 }

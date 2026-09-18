@@ -5,6 +5,7 @@ import type {
   ProjectWorkspace,
   RemoveProjectOptions,
 } from '../domain/project.js'
+import type { ConnectionTestResult, LlmProvider } from '../domain/provider.js'
 
 /**
  * The single source of truth for the renderer <-> main IPC surface.
@@ -46,6 +47,22 @@ export interface IpcContract {
     request: { limit?: number }
     response: { events: ActivityEvent[] }
   }
+  'providers/list': { request: undefined; response: { providers: LlmProvider[] } }
+  'providers/save': {
+    /** The API key transits IPC once on save; it is never returned back. */
+    request: {
+      draft: { id?: string; name: string; type: string; baseUrl: string; defaultModel?: string }
+      apiKey?: string
+    }
+    response: { provider: LlmProvider }
+  }
+  'providers/delete': { request: { id: string }; response: undefined }
+  'providers/test': {
+    request: { baseUrl: string; apiKey?: string }
+    response: ConnectionTestResult
+  }
+  /** Tests a saved provider using its Keychain secret without exposing it. */
+  'providers/test-saved': { request: { id: string }; response: ConnectionTestResult }
 }
 
 export type IpcChannel = keyof IpcContract
@@ -78,6 +95,16 @@ export interface StudioApi {
   activity: {
     list(limit?: number): Promise<{ events: ActivityEvent[] }>
   }
+  providers: {
+    list(): Promise<{ providers: LlmProvider[] }>
+    save(
+      draft: { id?: string; name: string; type: string; baseUrl: string; defaultModel?: string },
+      apiKey?: string,
+    ): Promise<{ provider: LlmProvider }>
+    remove(id: string): Promise<void>
+    test(baseUrl: string, apiKey?: string): Promise<ConnectionTestResult>
+    testSaved(id: string): Promise<ConnectionTestResult>
+  }
 }
 
 export function ipcChannels(): IpcChannel[] {
@@ -93,5 +120,10 @@ export function ipcChannels(): IpcChannel[] {
     'projects/tabs/open',
     'projects/tabs/activate',
     'activity/list',
+    'providers/list',
+    'providers/save',
+    'providers/delete',
+    'providers/test',
+    'providers/test-saved',
   ]
 }

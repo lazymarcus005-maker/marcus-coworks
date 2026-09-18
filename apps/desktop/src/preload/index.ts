@@ -26,6 +26,13 @@ const api: StudioApi = {
   activity: {
     list: (limit) => invoke('activity/list', { limit }),
   },
+  providers: {
+    list: () => invoke('providers/list', undefined),
+    save: (draft, apiKey) => invoke('providers/save', { draft, apiKey }),
+    remove: (id) => invoke('providers/delete', { id }),
+    test: (baseUrl, apiKey) => invoke('providers/test', { baseUrl, apiKey }),
+    testSaved: (id) => invoke('providers/test-saved', { id }),
+  },
 }
 
 contextBridge.exposeInMainWorld('studio', api)

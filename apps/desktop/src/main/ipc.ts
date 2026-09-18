@@ -66,6 +66,33 @@ export function registerIpcHandlers(ipcMain: IpcMainLike, deps: MainDependencies
       const { limit } = request as IpcContract['activity/list']['request']
       return { events: manager().listActivity(limit) }
     },
+    'providers/list': () => ({ providers: deps.services.providers.list() }),
+    'providers/save': async (_event, request) => {
+      const { draft, apiKey } = request as IpcContract['providers/save']['request']
+      const provider = await deps.services.providers.save(
+        {
+          id: draft.id,
+          name: draft.name,
+          type: draft.type as 'openai-compatible' | 'litellm' | 'localhost',
+          baseUrl: draft.baseUrl,
+          defaultModel: draft.defaultModel,
+        },
+        apiKey,
+      )
+      return { provider }
+    },
+    'providers/delete': (_event, request) => {
+      const { id } = request as IpcContract['providers/delete']['request']
+      return deps.services.providers.remove(id)
+    },
+    'providers/test': (_event, request) => {
+      const { baseUrl, apiKey } = request as IpcContract['providers/test']['request']
+      return deps.services.providers.testConnection({ baseUrl, apiKey })
+    },
+    'providers/test-saved': (_event, request) => {
+      const { id } = request as IpcContract['providers/test-saved']['request']
+      return deps.services.providers.testSaved(id)
+    },
   }
 
   for (const [channel, handler] of Object.entries(handlers)) {
