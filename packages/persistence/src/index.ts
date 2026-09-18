@@ -1,2 +1,7 @@
-// @studio/persistence — fleshed out by its implementing ticket.
-export const packageName = '@studio/persistence'
+export type { SqlParam, SqlRow } from './database.js'
+export { SqliteDb } from './database.js'
+export type { Migration } from './migrations.js'
+export { MIGRATIONS, migrate } from './migrations.js'
+export { ActivityRepository } from './repos/activity.js'
+export { ProjectRepository } from './repos/projects.js'
+export { TabRepository } from './repos/tabs.js'

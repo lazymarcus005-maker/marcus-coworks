@@ -6,5 +6,8 @@
   "description": "SQLite persistence layer",
   "exports": {
     ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@studio/shared": "*"
   }
 }

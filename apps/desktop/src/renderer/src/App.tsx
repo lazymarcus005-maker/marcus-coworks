@@ -1,37 +1,39 @@
-import type { HealthInfo } from '@studio/shared'
-import { createResource, Show } from 'solid-js'
+import { createResource, onMount, Show } from 'solid-js'
+import { ProjectView } from './components/ProjectView.js'
+import { TabsBar } from './components/TabsBar.js'
+import { Welcome } from './components/Welcome.js'
+import { createProjectsStore } from './state/projects.js'
 
 export default function App() {
-  const [health] = createResource(() => window.studio.app.health())
+  const store = createProjectsStore()
+  const [ready] = createResource(() => store.refresh())
+
+  onMount(() => {
+    const unsubscribe = setInterval(() => store.refresh(), 5_000)
+    return () => clearInterval(unsubscribe)
+  })
 
   return (
     <div class="app">
       <header class="app-header">
         <div class="app-title">OpenCode Agent Studio</div>
-      </header>
-      <main class="app-main">
-        <Show when={health()} fallback={<div class="muted">Connecting to main process…</div>}>
-          {(info: () => HealthInfo) => (
-            <section class="health-card" data-testid="health">
-              <h2>Secure IPC bridge online</h2>
-              <dl>
-                <dt>App</dt>
-                <dd>
-                  {info().appName} {info().appVersion}
-                </dd>
-                <dt>Platform</dt>
-                <dd>
-                  {info().platform} / {info().arch}
-                </dd>
-                <dt>Electron</dt>
-                <dd>{info().electronVersion}</dd>
-                <dt>Node</dt>
-                <dd>{info().nodeVersion}</dd>
-                <dt>Bridge check</dt>
-                <dd>{new Date(info().timestamp).toLocaleTimeString()}</dd>
-              </dl>
-            </section>
+        <Show when={store.error()}>
+          {(message) => (
+            <div class="app-error" role="alert">
+              {message()}
+            </div>
           )}
+        </Show>
+      </header>
+      <TabsBar store={store} />
+      <main class="app-main">
+        <Show
+          when={!ready.loading}
+          fallback={<div class="muted loading">Restoring workspace…</div>}
+        >
+          <Show when={store.activeProject()} fallback={<Welcome store={store} />}>
+            {(project) => <ProjectView project={project()} store={store} />}
+          </Show>
         </Show>
       </main>
     </div>

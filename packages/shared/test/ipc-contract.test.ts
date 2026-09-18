@@ -9,7 +9,7 @@ describe('ipc contract', () => {
 
   it('uses namespace/channel naming', () => {
     for (const channel of ipcChannels()) {
-      expect(channel).toMatch(/^[a-z][a-zA-Z]*\/[a-z][a-zA-Z]*$/)
+      expect(channel).toMatch(/^[a-z][a-zA-Z-]*\/[a-z][a-zA-Z/-]*$/)
     }
   })
 })

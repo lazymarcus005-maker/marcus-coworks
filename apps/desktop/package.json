@@ -11,6 +11,8 @@
     "start": "electron-vite preview"
   },
   "dependencies": {
+    "@studio/persistence": "*",
+    "@studio/project-manager": "*",
     "@studio/shared": "*",
     "solid-js": "^1.9.9"
   },

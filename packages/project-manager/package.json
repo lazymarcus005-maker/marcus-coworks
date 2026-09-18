@@ -6,5 +6,9 @@
   "description": "Project registry and lifecycle",
   "exports": {
     ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@studio/persistence": "*",
+    "@studio/shared": "*"
   }
 }

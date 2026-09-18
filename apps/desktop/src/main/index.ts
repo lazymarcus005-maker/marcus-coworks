@@ -1,11 +1,14 @@
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { HealthInfo } from '@studio/shared'
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain } from 'electron'
 import { registerIpcHandlers } from './ipc.js'
+import { createServices, type StudioServices } from './services.js'
 import { createStudioWindow } from './window.js'
 
 const mainDir = dirname(fileURLToPath(import.meta.url))
+
+let services: StudioServices | undefined
 
 function healthInfo(): HealthInfo {
   return {
@@ -32,12 +35,26 @@ function loadRenderer(win: BrowserWindow): void {
   win.loadFile(join(mainDir, '../renderer/index.html'))
 }
 
+async function pickFolder(): Promise<string | null> {
+  const focused = BrowserWindow.getFocusedWindow()
+  const options: Electron.OpenDialogOptions = {
+    properties: ['openDirectory', 'createDirectory'],
+  }
+  const result = focused
+    ? await dialog.showOpenDialog(focused, options)
+    : await dialog.showOpenDialog(options)
+  const first = result.filePaths[0]
+  return first === undefined ? null : first
+}
+
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
 })
 
 app.whenReady().then(() => {
-  registerIpcHandlers(ipcMain, { health: healthInfo })
+  services = createServices(app.getPath('userData'))
+
+  registerIpcHandlers(ipcMain, { health: healthInfo, pickFolder, services })
 
   const win = createStudioWindow(preloadPath())
   loadRenderer(win)
@@ -55,4 +72,8 @@ app.whenReady().then(() => {
       loadRenderer(reopened)
     }
   })
+})
+
+app.on('will-quit', () => {
+  services?.db.close()
 })
