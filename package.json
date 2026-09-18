@@ -1,0 +1,35 @@
+{
+  "name": "marcus-coworks",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "OpenCode Agent Studio — macOS-first multi-project coding-agent workspace",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build": "npm run build --workspace @studio/desktop",
+    "smoke": "npm run smoke --workspace @studio/desktop",
+    "dev": "npm run dev --workspace @studio/desktop"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.2",
+    "@types/node": "^26.0.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "allowScripts": {
+    "electron@39.8.10": true,
+    "esbuild@0.25.12": true,
+    "esbuild@0.28.2": true
+  }
+}

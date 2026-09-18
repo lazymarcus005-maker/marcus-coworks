@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js"
+  },
+  "include": [
+    "packages/*/src/**/*.ts",
+    "packages/*/test/**/*.ts",
+    "apps/desktop/src/main/**/*.ts",
+    "apps/desktop/src/preload/**/*.ts",
+    "apps/desktop/src/renderer/src/**/*.ts",
+    "apps/desktop/src/renderer/src/**/*.tsx",
+    "apps/desktop/test/**/*.ts",
+    "vitest.config.ts"
+  ],
+  "exclude": ["**/out/**", "**/dist/**", "**/node_modules/**"]
+}

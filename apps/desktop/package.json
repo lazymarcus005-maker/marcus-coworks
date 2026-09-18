@@ -1,0 +1,23 @@
+{
+  "name": "@studio/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "smoke": "electron-vite build && STUDIO_SMOKE=1 electron .",
+    "start": "electron-vite preview"
+  },
+  "dependencies": {
+    "@studio/shared": "*",
+    "solid-js": "^1.9.9"
+  },
+  "devDependencies": {
+    "electron": "^39.2.0",
+    "electron-vite": "^4.0.0",
+    "vite": "^7.1.9",
+    "vite-plugin-solid": "^2.11.7"
+  }
+}

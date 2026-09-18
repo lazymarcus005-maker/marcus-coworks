@@ -1,0 +1,94 @@
+:root {
+  color-scheme: dark;
+  --bg: #1e1e24;
+  --bg-panel: #26262e;
+  --bg-elevated: #2e2e38;
+  --border: #3a3a46;
+  --text: #e8e8ee;
+  --text-muted: #9a9aa8;
+  --accent: #7aa2f7;
+  --ok: #9ece6a;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 96px 0 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-panel);
+  -webkit-app-region: drag;
+}
+
+.app-title {
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+
+.app-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.health-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px 24px;
+  min-width: 360px;
+}
+
+.health-card h2 {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--ok);
+}
+
+.health-card dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 18px;
+  margin: 0;
+}
+
+.health-card dt {
+  color: var(--text-muted);
+}
+
+.health-card dd {
+  margin: 0;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+.muted {
+  color: var(--text-muted);
+}

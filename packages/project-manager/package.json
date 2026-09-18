@@ -1,0 +1,10 @@
+{
+  "name": "@studio/project-manager",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Project registry and lifecycle",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

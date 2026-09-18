@@ -1,0 +1,10 @@
+{
+  "name": "@studio/task-manager",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Durable task and TODO store",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "@studio/persistence",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "SQLite persistence layer",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

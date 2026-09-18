@@ -1,0 +1,10 @@
+{
+  "name": "@studio/opencode-adapter",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "OpenCode runtime adapter",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}
