@@ -182,19 +182,34 @@ export function evaluatePolicy(
       }
     }
     case 'shell': {
-      // Best-effort guard: shell commands that reference protected paths
-      // via common read/exfil verbs are denied.
-      for (const pattern of policy.protectedPaths) {
-        const literal = pattern.replace(/\*\*/g, '').replace(/\*/g, '').replace(/\/+$/, '')
-        if (
-          literal !== '' &&
-          action.command.includes(literal) &&
-          /(cat|curl|scp|rsync|tee|>|cp|mv|rm)/.test(action.command)
-        ) {
-          return {
-            decision: 'DENY',
-            matchedRule: pattern,
-            reason: 'Shell command touches a protected path',
+      // Best-effort guard: commands that reference a sensitive path via a
+      // mutating or exfiltrating verb are gated. DENY for protected paths,
+      // ASK for human-approval paths.
+      const literalOf = (pattern: string) =>
+        pattern.replace(/\*\*/g, '').replace(/\*/g, '').replace(/\/+$/, '')
+      const mutating =
+        /(cat|curl|scp|rsync|tee|>|cp|mv|rm|touch|mkdir|chmod|chmod|nano|vim|sed|dd)/.test(
+          action.command,
+        )
+      if (mutating) {
+        for (const pattern of policy.protectedPaths) {
+          const literal = literalOf(pattern)
+          if (literal !== '' && action.command.includes(literal)) {
+            return {
+              decision: 'DENY',
+              matchedRule: pattern,
+              reason: 'Shell command touches a protected path',
+            }
+          }
+        }
+        for (const pattern of policy.humanApprovalPaths) {
+          const literal = literalOf(pattern)
+          if (literal !== '' && action.command.includes(literal)) {
+            return {
+              decision: 'ASK',
+              matchedRule: pattern,
+              reason: `Human approval required: command touches ${pattern}`,
+            }
           }
         }
       }

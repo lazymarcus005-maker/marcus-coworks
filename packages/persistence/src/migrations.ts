@@ -168,12 +168,31 @@ CREATE TABLE locks (
 CREATE INDEX idx_locks_project_status ON locks(project_id, status);
 `
 
+const MIGRATION_0006 = `
+CREATE TABLE inbox_items (
+  id TEXT PRIMARY KEY,
+  project_id TEXT,
+  task_id TEXT,
+  goal_id TEXT,
+  kind TEXT NOT NULL,
+  title TEXT NOT NULL,
+  detail TEXT,
+  evidence_json TEXT NOT NULL DEFAULT '[]',
+  status TEXT NOT NULL DEFAULT 'open',
+  decision TEXT,
+  decided_at TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX idx_inbox_status ON inbox_items(status, created_at);
+`
+
 export const MIGRATIONS: Migration[] = [
   { id: 1, name: 'initial_schema', sql: MIGRATION_0001 },
   { id: 2, name: 'task_source_and_updated_at', sql: MIGRATION_0002 },
   { id: 3, name: 'task_transitions', sql: MIGRATION_0003 },
   { id: 4, name: 'worktrees', sql: MIGRATION_0004 },
   { id: 5, name: 'locks', sql: MIGRATION_0005 },
+  { id: 6, name: 'inbox_items', sql: MIGRATION_0006 },
 ]
 
 /** Applies pending migrations. Repeatable: already-applied ids are skipped. */

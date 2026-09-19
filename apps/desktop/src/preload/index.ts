@@ -90,6 +90,11 @@ const api: StudioApi = {
       invoke('locks/acquire', { projectId, ownerTaskId, patterns }),
     release: (lockId) => invoke('locks/release', { lockId }),
   },
+  inbox: {
+    list: (status) => invoke('inbox/list', { status }),
+    resolve: (itemId, decision, note, resumeTask) =>
+      invoke('inbox/resolve', { itemId, decision, note, resumeTask }),
+  },
 }
 
 contextBridge.exposeInMainWorld('studio', api)

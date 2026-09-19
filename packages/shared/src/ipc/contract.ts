@@ -1,6 +1,7 @@
 import type { HealthInfo } from '../domain/app.js'
 import type { ChatMessage, ChatPushEvent } from '../domain/chat.js'
 import type { FileEntry, TerminalInfo } from '../domain/fs.js'
+import type { InboxDecision, InboxItem, InboxItemStatus } from '../domain/inbox.js'
 import type { AcquireResult, ScopeLock } from '../domain/lock.js'
 import type {
   ActivityEvent,
@@ -146,6 +147,14 @@ export interface IpcContract {
     response: { result: AcquireResult }
   }
   'locks/release': { request: { lockId: string }; response: undefined }
+  'inbox/list': {
+    request: { status?: InboxItemStatus }
+    response: { items: InboxItem[] }
+  }
+  'inbox/resolve': {
+    request: { itemId: string; decision: InboxDecision; note?: string; resumeTask?: boolean }
+    response: { item: InboxItem }
+  }
 }
 
 /** Main → renderer push channel for live chat events. */
@@ -264,6 +273,15 @@ export interface StudioApi {
     ): Promise<{ result: AcquireResult }>
     release(lockId: string): Promise<void>
   }
+  inbox: {
+    list(status?: InboxItemStatus): Promise<{ items: InboxItem[] }>
+    resolve(
+      itemId: string,
+      decision: InboxDecision,
+      note?: string,
+      resumeTask?: boolean,
+    ): Promise<{ item: InboxItem }>
+  }
 }
 
 export function ipcChannels(): IpcChannel[] {
@@ -310,5 +328,7 @@ export function ipcChannels(): IpcChannel[] {
     'locks/list',
     'locks/acquire',
     'locks/release',
+    'inbox/list',
+    'inbox/resolve',
   ]
 }

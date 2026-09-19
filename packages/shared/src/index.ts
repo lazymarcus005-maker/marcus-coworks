@@ -1,6 +1,7 @@
 export * from './domain/app.js'
 export * from './domain/chat.js'
 export * from './domain/fs.js'
+export * from './domain/inbox.js'
 export * from './domain/lock.js'
 export * from './domain/policy.js'
 export * from './domain/project.js'

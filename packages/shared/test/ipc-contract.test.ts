@@ -50,6 +50,8 @@ const COVERAGE: Record<IpcChannel, true> = {
   'locks/list': true,
   'locks/acquire': true,
   'locks/release': true,
+  'inbox/list': true,
+  'inbox/resolve': true,
 }
 
 describe('ipc contract', () => {

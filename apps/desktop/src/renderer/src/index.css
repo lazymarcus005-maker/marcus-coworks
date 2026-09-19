@@ -817,3 +817,78 @@ body {
   grid-template-columns: 1fr 1fr 1fr;
   gap: 6px;
 }
+
+/* ---- inbox ---- */
+
+.inbox-bell {
+  position: relative;
+}
+
+.inbox-popover {
+  right: 0;
+  min-width: 360px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.inbox-empty {
+  padding: 12px;
+  font-size: 12px;
+}
+
+.inbox-item {
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--bg);
+}
+
+.inbox-item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.badge-kind-approval-required,
+.badge-kind-security-sensitive,
+.badge-kind-protected-path {
+  color: var(--warn);
+  border-color: var(--warn);
+}
+
+.badge-kind-attempts-exhausted,
+.badge-kind-verifier-rejected,
+.badge-kind-destructive-action {
+  color: var(--err);
+  border-color: var(--err);
+}
+
+.inbox-title {
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.inbox-detail {
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.inbox-links {
+  display: flex;
+  gap: 10px;
+  font-size: 11px;
+}
+
+.inbox-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.inbox-when {
+  font-size: 11px;
+}

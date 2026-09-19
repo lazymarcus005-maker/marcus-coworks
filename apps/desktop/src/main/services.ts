@@ -4,6 +4,7 @@ import { OpenCodeRuntime } from '@studio/opencode-adapter'
 import {
   ActivityRepository,
   GoalRepository,
+  InboxRepository,
   LockRepository,
   migrate,
   ProjectRepository,
@@ -23,6 +24,7 @@ import { TaskManager } from '@studio/task-manager'
 import { gitRunner, WorktreeManager } from '@studio/worktree-manager'
 import { ChatService } from './chat.js'
 import { listDirectory } from './explorer.js'
+import { InboxManager } from './inbox.js'
 import { ProviderService } from './providers.js'
 import { type TerminalPushEvent, TerminalService } from './terminal.js'
 
@@ -37,6 +39,7 @@ export interface StudioServices {
   tasks: TaskManager
   worktrees: WorktreeManager
   locks: LockManager
+  inbox: InboxManager
   policy: typeof loadPolicy
   runtime: OpenCodeRuntime
   terminals: TerminalService
@@ -83,6 +86,15 @@ function buildServices(
     activity,
   })
 
+  const tasksManagerForInbox = tasks
+  const inbox = new InboxManager({
+    inbox: new InboxRepository(db),
+    activity,
+    applyTaskTransition: (taskId, to, reason) => {
+      tasksManagerForInbox.applyTransition(taskId, to, reason)
+    },
+  })
+
   const runtime = new OpenCodeRuntime()
   const chat = new ChatService({
     runtime,
@@ -90,6 +102,7 @@ function buildServices(
     sessions,
     activity,
     tasks,
+    inbox,
     onEvent: onChatEvent,
   })
 
@@ -104,6 +117,7 @@ function buildServices(
     tasks,
     worktrees,
     locks,
+    inbox,
     policy: loadPolicy,
     runtime,
     terminals,

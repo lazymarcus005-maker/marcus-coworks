@@ -249,6 +249,19 @@ export function registerIpcHandlers(ipcMain: IpcMainLike, deps: MainDependencies
     },
     'locks/list': (_event, request) => {
       const { projectId } = request as IpcContract['locks/list']['request']
+      // Escalated waits (deadline exceeded) surface in the Human Inbox.
+      for (const lock of deps.services.locks.reconcile(projectId)) {
+        if (lock.escalatedAt) {
+          deps.services.inbox.escalate({
+            projectId,
+            taskId: lock.ownerTaskId,
+            kind: 'lock-conflict',
+            title: `Path lock conflict: ${lock.patterns.join(', ')}`,
+            detail: 'A waiting lock exceeded its wait deadline while another task holds the scope.',
+            evidenceIds: [lock.id],
+          })
+        }
+      }
       return { locks: deps.services.locks.listForProject(projectId) }
     },
     'locks/acquire': (_event, request) => {
@@ -260,6 +273,21 @@ export function registerIpcHandlers(ipcMain: IpcMainLike, deps: MainDependencies
       const { lockId } = request as IpcContract['locks/release']['request']
       deps.services.locks.release(lockId)
       return undefined
+    },
+    'inbox/list': (_event, request) => {
+      const { status } = request as IpcContract['inbox/list']['request']
+      return {
+        items:
+          status === 'resolved'
+            ? deps.services.inbox.listResolved()
+            : deps.services.inbox.listOpen(),
+      }
+    },
+    'inbox/resolve': async (_event, request) => {
+      const { itemId, decision, note, resumeTask } =
+        request as IpcContract['inbox/resolve']['request']
+      const { item } = await deps.services.inbox.resolve({ itemId, decision, note, resumeTask })
+      return { item }
     },
   }
 

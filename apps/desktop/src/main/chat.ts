@@ -8,6 +8,7 @@ import type {
   RuntimeEvent,
 } from '@studio/shared'
 import { isSubstantialRequest, type TaskManager } from '@studio/task-manager'
+import type { InboxManager } from './inbox.js'
 
 export interface ChatServiceDeps {
   runtime: CodingAgentRuntime
@@ -15,6 +16,7 @@ export interface ChatServiceDeps {
   sessions: SessionRepository
   activity: ActivityRepository
   tasks: TaskManager
+  inbox: InboxManager
   /** Push a resolved event to the renderer. */
   onEvent: (event: ChatPushEvent) => void
   now?: () => Date
@@ -166,6 +168,18 @@ export class ChatService {
       })
       throw new Error(
         `Blocked by policy (${gate.matchedRule ?? 'DENY'}): ${gate.reason ?? 'denied'}`,
+      )
+    }
+    if (gate.decision === 'ASK') {
+      this.deps.inbox.escalate({
+        projectId: project.id,
+        kind: 'approval-required',
+        title: `Approval required: ${gate.matchedRule ?? 'policy ASK'}`,
+        detail: gate.reason ?? 'A policy rule requires human approval before this send proceeds.',
+        evidenceIds: [],
+      })
+      throw new Error(
+        `Approval required (${gate.matchedRule ?? 'policy ASK'}): the request is in the Human Inbox`,
       )
     }
 

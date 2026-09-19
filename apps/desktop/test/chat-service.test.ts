@@ -14,6 +14,15 @@ import type { ChatPushEvent, CodingAgentRuntime, RuntimeEvent } from '@studio/sh
 import { TaskManager } from '@studio/task-manager'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { ChatService } from '../src/main/chat.js'
+import type { InboxManager } from '../src/main/inbox.js'
+
+const escalatedItems: { kind: string; title: string }[] = []
+const fakeInbox = {
+  escalate: (input: { kind: string; title: string }) => {
+    escalatedItems.push({ kind: input.kind, title: input.title })
+    return { id: 'item', status: 'open', createdAt: '', evidenceIds: [] }
+  },
+} as unknown as InboxManager
 
 class FakeRuntime implements CodingAgentRuntime {
   nextSessionId = 1
@@ -89,6 +98,7 @@ beforeAll(() => {
       goals: new GoalRepository(db),
       activity: new ActivityRepository(db),
     }),
+    inbox: fakeInbox,
     onEvent: (event) => pushed.push(event),
     now: () => new Date('2026-09-19T00:00:00Z'),
   })
@@ -220,6 +230,14 @@ describe('policy gating', () => {
     expect(denied.length).toBeGreaterThanOrEqual(1)
     const payload = JSON.parse(String(denied[0]?.payload_json)) as { matchedRule?: string }
     expect(payload.matchedRule).toBe('**/.env')
+  })
+
+  it('policy ASK escalates to the Human Inbox instead of silently proceeding', async () => {
+    const project = projects.get('proj-1')!
+    await expect(
+      chat.send(project, 'touch src/auth/session.ts to rotate the token'),
+    ).rejects.toThrow(/Approval required/)
+    expect(escalatedItems.some((item) => item.kind === 'approval-required')).toBe(true)
   })
 
   it('allows normal sends through the gate with an audited check', async () => {
