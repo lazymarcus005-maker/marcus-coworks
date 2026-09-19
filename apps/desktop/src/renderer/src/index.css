@@ -900,3 +900,15 @@ body {
   font-size: 12px;
   border-bottom: 1px solid var(--warn);
 }
+
+.skill-editor {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 12px;
+  padding: 8px;
+  outline: none;
+  resize: vertical;
+}

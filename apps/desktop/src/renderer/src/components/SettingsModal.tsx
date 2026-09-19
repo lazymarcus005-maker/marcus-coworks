@@ -19,6 +19,7 @@ const EMPTY_DRAFT: Draft = {
 }
 
 import { McpPane } from './McpPane.js'
+import { SkillsPane } from './SkillsPane.js'
 
 export function SettingsModal(props: {
   onClose: () => void
@@ -107,6 +108,10 @@ export function SettingsModal(props: {
           </button>
         </div>
         <div class="modal-body">
+          <section class="settings-section">
+            <h3>Skills</h3>
+            <SkillsPane projectPath={props.projectPath} />
+          </section>
           <section class="settings-section">
             <h3>MCP Servers</h3>
             <McpPane projectPath={props.projectPath} />

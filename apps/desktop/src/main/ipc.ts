@@ -307,6 +307,38 @@ export function registerIpcHandlers(ipcMain: IpcMainLike, deps: MainDependencies
           : deps.services.verification.historyForProject(projectId),
       }
     },
+    'skills/list': (_event, request) => {
+      const { projectPath } = request as IpcContract['skills/list']['request']
+      return { skills: deps.services.skills.list(projectPath) }
+    },
+    'skills/create': (_event, request) => {
+      const { input, projectPath } = request as IpcContract['skills/create']['request']
+      return { skill: deps.services.skills.create(input, projectPath) }
+    },
+    'skills/read': (_event, request) => {
+      const { name, scope, projectPath } = request as IpcContract['skills/read']['request']
+      return { content: deps.services.skills.read(name, scope, projectPath) }
+    },
+    'skills/write': (_event, request) => {
+      const { name, scope, content, projectPath } =
+        request as IpcContract['skills/write']['request']
+      deps.services.skills.write(name, scope, content, projectPath)
+      return undefined
+    },
+    'skills/import': (_event, request) => {
+      const { sourceDir, scope, projectPath } = request as IpcContract['skills/import']['request']
+      return { skill: deps.services.skills.import(sourceDir, scope, projectPath) }
+    },
+    'skills/install-git': (_event, request) => {
+      const { gitUrl, scope, projectPath } = request as IpcContract['skills/install-git']['request']
+      return { skills: deps.services.skills.installFromGit(gitUrl, scope, projectPath) }
+    },
+    'skills/set-enabled': (_event, request) => {
+      const { name, scope, enabled, projectPath } =
+        request as IpcContract['skills/set-enabled']['request']
+      deps.services.skills.setEnabled(name, scope, enabled, projectPath)
+      return undefined
+    },
     'mcp/list': (_event, request) => {
       const { projectPath } = request as IpcContract['mcp/list']['request']
       return { servers: deps.services.mcp.list(projectPath) }

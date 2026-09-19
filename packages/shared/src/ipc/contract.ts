@@ -13,6 +13,7 @@ import type {
   RemoveProjectOptions,
 } from '../domain/project.js'
 import type { ConnectionTestResult, LlmProvider } from '../domain/provider.js'
+import type { SkillCreateInput, SkillInfo, SkillScope } from '../domain/skills.js'
 import type { GoalContract, HarnessTask, TaskStatus, TaskTransition } from '../domain/task.js'
 import type {
   VerificationCommand,
@@ -195,6 +196,31 @@ export interface IpcContract {
     request: { taskId: string }
     response: { attempts: AttemptRecord[] }
   }
+  'skills/list': { request: { projectPath?: string }; response: { skills: SkillInfo[] } }
+  'skills/create': {
+    request: { input: SkillCreateInput; projectPath?: string }
+    response: { skill: SkillInfo }
+  }
+  'skills/read': {
+    request: { name: string; scope: SkillScope; projectPath?: string }
+    response: { content: string }
+  }
+  'skills/write': {
+    request: { name: string; scope: SkillScope; content: string; projectPath?: string }
+    response: undefined
+  }
+  'skills/import': {
+    request: { sourceDir: string; scope: SkillScope; projectPath?: string }
+    response: { skill: SkillInfo }
+  }
+  'skills/install-git': {
+    request: { gitUrl: string; scope: SkillScope; projectPath?: string }
+    response: { skills: SkillInfo[] }
+  }
+  'skills/set-enabled': {
+    request: { name: string; scope: SkillScope; enabled: boolean; projectPath?: string }
+    response: undefined
+  }
   'mcp/list': { request: { projectPath?: string }; response: { servers: McpServerConfig[] } }
   'mcp/save': {
     request: { config: McpServerConfig; projectPath?: string }
@@ -374,6 +400,28 @@ export interface StudioApi {
       implementerSessionId?: string,
     ): Promise<{ decision: import('../domain/verifier.js').VerifierDecision }>
   }
+  skills: {
+    list(projectPath?: string): Promise<{ skills: SkillInfo[] }>
+    create(input: SkillCreateInput, projectPath?: string): Promise<{ skill: SkillInfo }>
+    read(name: string, scope: SkillScope, projectPath?: string): Promise<{ content: string }>
+    write(name: string, scope: SkillScope, content: string, projectPath?: string): Promise<void>
+    import(
+      sourceDir: string,
+      scope: SkillScope,
+      projectPath?: string,
+    ): Promise<{ skill: SkillInfo }>
+    installFromGit(
+      gitUrl: string,
+      scope: SkillScope,
+      projectPath?: string,
+    ): Promise<{ skills: SkillInfo[] }>
+    setEnabled(
+      name: string,
+      scope: SkillScope,
+      enabled: boolean,
+      projectPath?: string,
+    ): Promise<void>
+  }
   mcp: {
     list(projectPath?: string): Promise<{ servers: McpServerConfig[] }>
     save(config: McpServerConfig, projectPath?: string): Promise<{ config: McpServerConfig }>
@@ -460,6 +508,13 @@ export function ipcChannels(): IpcChannel[] {
     'verification/run',
     'verification/history',
     'verifier/review',
+    'skills/list',
+    'skills/create',
+    'skills/read',
+    'skills/write',
+    'skills/import',
+    'skills/install-git',
+    'skills/set-enabled',
     'mcp/list',
     'mcp/save',
     'mcp/remove',

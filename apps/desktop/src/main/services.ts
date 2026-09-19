@@ -33,6 +33,7 @@ import { InboxManager } from './inbox.js'
 import { McpManager } from './mcp.js'
 import { PauseManager } from './pause.js'
 import { ProviderService } from './providers.js'
+import { SkillsManager } from './skills.js'
 import { type TerminalPushEvent, TerminalService } from './terminal.js'
 import { VerificationManager } from './verification.js'
 import { VerifierService } from './verifier.js'
@@ -54,6 +55,7 @@ export interface StudioServices {
   attempts: AttemptManager
   pause: PauseManager
   mcp: McpManager
+  skills: SkillsManager
   policy: typeof loadPolicy
   runtime: OpenCodeRuntime
   terminals: TerminalService
@@ -127,6 +129,10 @@ function buildServices(
   })
 
   const runtime = new OpenCodeRuntime()
+  const skills = new SkillsManager({
+    globalSkillsDir: join(homeDir(), '.config', 'opencode', 'skills'),
+  })
+
   const mcp = new McpManager({
     globalConfigPath: join(homeDir(), '.config', 'opencode', 'opencode.json'),
     runtimeBaseUrl: () => runtime.ensureServer(),
@@ -209,6 +215,7 @@ function buildServices(
     attempts: attemptManager,
     pause,
     mcp,
+    skills,
     policy: loadPolicy,
     runtime,
     terminals,

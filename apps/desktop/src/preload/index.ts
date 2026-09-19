@@ -110,6 +110,19 @@ const api: StudioApi = {
     review: (projectId, taskId, worktreeId, implementerSessionId) =>
       invoke('verifier/review', { projectId, taskId, worktreeId, implementerSessionId }),
   },
+  skills: {
+    list: (projectPath) => invoke('skills/list', { projectPath }),
+    create: (input, projectPath) => invoke('skills/create', { input, projectPath }),
+    read: (name, scope, projectPath) => invoke('skills/read', { name, scope, projectPath }),
+    write: (name, scope, content, projectPath) =>
+      invoke('skills/write', { name, scope, content, projectPath }),
+    import: (sourceDir, scope, projectPath) =>
+      invoke('skills/import', { sourceDir, scope, projectPath }),
+    installFromGit: (gitUrl, scope, projectPath) =>
+      invoke('skills/install-git', { gitUrl, scope, projectPath }),
+    setEnabled: (name, scope, enabled, projectPath) =>
+      invoke('skills/set-enabled', { name, scope, enabled, projectPath }),
+  },
   mcp: {
     list: (projectPath) => invoke('mcp/list', { projectPath }),
     save: (config, projectPath) => invoke('mcp/save', { config, projectPath }),
