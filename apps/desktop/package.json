@@ -19,7 +19,8 @@
     "@studio/task-manager": "*",
     "node-pty": "^1.1.0",
     "@xterm/xterm": "^5.5.0",
-    "@xterm/addon-fit": "^0.10.0"
+    "@xterm/addon-fit": "^0.10.0",
+    "@studio/worktree-manager": "*"
   },
   "devDependencies": {
     "electron": "^39.2.0",

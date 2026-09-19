@@ -9,6 +9,7 @@ import type {
 } from '../domain/project.js'
 import type { ConnectionTestResult, LlmProvider } from '../domain/provider.js'
 import type { GoalContract, HarnessTask, TaskStatus, TaskTransition } from '../domain/task.js'
+import type { WorktreeDiff, WorktreeRecord, WorktreeStatus } from '../domain/worktree.js'
 
 /**
  * The single source of truth for the renderer <-> main IPC surface.
@@ -127,6 +128,17 @@ export interface IpcContract {
   }
   'terminal/dispose': { request: { terminalId: string }; response: undefined }
   'terminal/list': { request: { projectId: string }; response: { terminals: TerminalInfo[] } }
+  'worktrees/list': { request: { projectId: string }; response: { worktrees: WorktreeRecord[] } }
+  'worktrees/create': {
+    request: { taskId: string; attempt: number }
+    response: { worktree: WorktreeRecord }
+  }
+  'worktrees/status': {
+    request: { worktreeId: string; status: WorktreeStatus }
+    response: { worktree: WorktreeRecord }
+  }
+  'worktrees/diff': { request: { worktreeId: string }; response: { diff: WorktreeDiff } }
+  'worktrees/discard': { request: { worktreeId: string; force?: boolean }; response: undefined }
 }
 
 /** Main → renderer push channel for live chat events. */
@@ -229,6 +241,13 @@ export interface StudioApi {
       ) => void,
     ): () => void
   }
+  worktrees: {
+    list(projectId: string): Promise<{ worktrees: WorktreeRecord[] }>
+    create(taskId: string, attempt: number): Promise<{ worktree: WorktreeRecord }>
+    setStatus(worktreeId: string, status: WorktreeStatus): Promise<{ worktree: WorktreeRecord }>
+    diff(worktreeId: string): Promise<{ diff: WorktreeDiff }>
+    discard(worktreeId: string, force?: boolean): Promise<void>
+  }
 }
 
 export function ipcChannels(): IpcChannel[] {
@@ -267,5 +286,10 @@ export function ipcChannels(): IpcChannel[] {
     'terminal/resize',
     'terminal/dispose',
     'terminal/list',
+    'worktrees/list',
+    'worktrees/create',
+    'worktrees/status',
+    'worktrees/diff',
+    'worktrees/discard',
   ]
 }

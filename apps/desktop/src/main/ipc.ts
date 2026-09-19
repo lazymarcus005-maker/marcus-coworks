@@ -18,6 +18,20 @@ export interface MainDependencies {
 
 type Handler = (event: unknown, request: unknown) => unknown
 
+function projectForTask(deps: MainDependencies, taskId: string) {
+  for (const project of managerOf(deps).listProjects()) {
+    const hasTask = deps.services.tasks
+      .stateForProject(project.id)
+      .tasks.some((task) => task.id === taskId)
+    if (hasTask) return project
+  }
+  throw new Error('Project for task not found')
+}
+
+function managerOf(deps: MainDependencies) {
+  return deps.services.projectManager
+}
+
 export function registerIpcHandlers(ipcMain: IpcMainLike, deps: MainDependencies): void {
   const manager = () => deps.services.projectManager
 
@@ -201,6 +215,37 @@ export function registerIpcHandlers(ipcMain: IpcMainLike, deps: MainDependencies
     'terminal/list': (_event, request) => {
       const { projectId } = request as IpcContract['terminal/list']['request']
       return { terminals: deps.services.terminals.list(projectId) }
+    },
+    'worktrees/list': (_event, request) => {
+      const { projectId } = request as IpcContract['worktrees/list']['request']
+      return { worktrees: deps.services.worktrees.listForProject(projectId) }
+    },
+    'worktrees/create': async (_event, request) => {
+      const { taskId, attempt } = request as IpcContract['worktrees/create']['request']
+      const task = deps.services.tasks.stateForProject
+      void task
+      const project = projectForTask(deps, taskId)
+      const worktree = await deps.services.worktrees.createForAttempt(project, taskId, attempt)
+      return { worktree }
+    },
+    'worktrees/status': (_event, request) => {
+      const { worktreeId, status } = request as IpcContract['worktrees/status']['request']
+      return { worktree: deps.services.worktrees.setStatus(worktreeId, status) }
+    },
+    'worktrees/diff': async (_event, request) => {
+      const { worktreeId } = request as IpcContract['worktrees/diff']['request']
+      const record = deps.services.worktrees.get(worktreeId)
+      if (!record) throw new Error('Worktree not found')
+      const project = projectForTask(deps, record.taskId)
+      return { diff: await deps.services.worktrees.captureDiff(record, project.path) }
+    },
+    'worktrees/discard': async (_event, request) => {
+      const { worktreeId, force } = request as IpcContract['worktrees/discard']['request']
+      const record = deps.services.worktrees.get(worktreeId)
+      if (!record) throw new Error('Worktree not found')
+      const project = projectForTask(deps, record.taskId)
+      await deps.services.worktrees.discard(worktreeId, project.path, { force })
+      return undefined
     },
   }
 

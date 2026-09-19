@@ -87,6 +87,13 @@ app.whenReady().then(() => {
 
   registerIpcHandlers(ipcMain, { health: healthInfo, pickFolder, services })
 
+  // Reconcile worktree manifests with reality after a restart.
+  for (const project of services.projectManager.listProjects()) {
+    services.worktrees.reconcile(project.path).catch((cause) => {
+      console.warn(`worktree reconcile failed for ${project.name}: ${String(cause)}`)
+    })
+  }
+
   const win = createStudioWindow(preloadPath())
   loadRenderer(win)
 

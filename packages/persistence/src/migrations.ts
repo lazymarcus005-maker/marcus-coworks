@@ -134,10 +134,29 @@ CREATE TABLE task_transitions (
 CREATE INDEX idx_task_transitions_task ON task_transitions(task_id, at);
 `
 
+const MIGRATION_0004 = `
+CREATE TABLE worktrees (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  task_id TEXT NOT NULL,
+  attempt INTEGER NOT NULL,
+  path TEXT NOT NULL UNIQUE,
+  branch TEXT NOT NULL,
+  base_branch TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'active',
+  diff_path TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE INDEX idx_worktrees_task ON worktrees(task_id, attempt);
+CREATE INDEX idx_worktrees_project ON worktrees(project_id);
+`
+
 export const MIGRATIONS: Migration[] = [
   { id: 1, name: 'initial_schema', sql: MIGRATION_0001 },
   { id: 2, name: 'task_source_and_updated_at', sql: MIGRATION_0002 },
   { id: 3, name: 'task_transitions', sql: MIGRATION_0003 },
+  { id: 4, name: 'worktrees', sql: MIGRATION_0004 },
 ]
 
 /** Applies pending migrations. Repeatable: already-applied ids are skipped. */

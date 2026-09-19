@@ -77,6 +77,13 @@ const api: StudioApi = {
       return () => ipcRenderer.removeListener(TERMINAL_EVENT_CHANNEL, handler)
     },
   },
+  worktrees: {
+    list: (projectId) => invoke('worktrees/list', { projectId }),
+    create: (taskId, attempt) => invoke('worktrees/create', { taskId, attempt }),
+    setStatus: (worktreeId, status) => invoke('worktrees/status', { worktreeId, status }),
+    diff: (worktreeId) => invoke('worktrees/diff', { worktreeId }),
+    discard: (worktreeId, force) => invoke('worktrees/discard', { worktreeId, force }),
+  },
 }
 
 contextBridge.exposeInMainWorld('studio', api)

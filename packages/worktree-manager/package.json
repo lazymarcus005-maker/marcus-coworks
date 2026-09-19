@@ -1,0 +1,14 @@
+{
+  "name": "@studio/worktree-manager",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Per-task/per-attempt Git worktree isolation",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@studio/persistence": "*",
+    "@studio/shared": "*"
+  }
+}

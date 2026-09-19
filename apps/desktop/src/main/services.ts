@@ -11,11 +11,13 @@ import {
   TabRepository,
   TaskRepository,
   TaskTransitionRepository,
+  WorktreeRepository,
 } from '@studio/persistence'
 import { ProjectManager } from '@studio/project-manager'
 import { KeychainSecretStore, type SecretStore } from '@studio/secrets'
 import type { ChatPushEvent } from '@studio/shared'
 import { TaskManager } from '@studio/task-manager'
+import { gitRunner, WorktreeManager } from '@studio/worktree-manager'
 import { ChatService } from './chat.js'
 import { listDirectory } from './explorer.js'
 import { ProviderService } from './providers.js'
@@ -30,6 +32,7 @@ export interface StudioServices {
   providers: ProviderService
   chat: ChatService
   tasks: TaskManager
+  worktrees: WorktreeManager
   runtime: OpenCodeRuntime
   terminals: TerminalService
   explorer: typeof listDirectory
@@ -64,6 +67,12 @@ function buildServices(
     transitions: new TaskTransitionRepository(db),
   })
 
+  const worktrees = new WorktreeManager({
+    worktrees: new WorktreeRepository(db),
+    activity,
+    git: gitRunner(),
+  })
+
   const runtime = new OpenCodeRuntime()
   const chat = new ChatService({
     runtime,
@@ -83,6 +92,7 @@ function buildServices(
     providers,
     chat,
     tasks,
+    worktrees,
     runtime,
     terminals,
     explorer: listDirectory,
