@@ -12,6 +12,12 @@ export class SettingsRepository {
     this.db.run('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)', key, value)
   }
 
+  keys(): string[] {
+    return this.db
+      .all('SELECT key FROM settings ORDER BY key')
+      .map((row) => String((row as { key: string }).key))
+  }
+
   delete(key: string): void {
     this.db.run('DELETE FROM settings WHERE key = ?', key)
   }

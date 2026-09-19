@@ -1,3 +1,4 @@
+export { backupDatabase, exportSettings, restoreDatabase } from './backup.js'
 export type { SqlParam, SqlRow } from './database.js'
 export { SqliteDb } from './database.js'
 export type { Migration } from './migrations.js'
