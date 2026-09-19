@@ -9,6 +9,7 @@ import type {
   CodingAgentRuntime,
   RuntimeDetection,
   RuntimeEvent,
+  SessionScope,
 } from '@studio/shared'
 import { sseDataLines } from './sse.js'
 
@@ -227,7 +228,9 @@ export class OpenCodeRuntime implements CodingAgentRuntime {
       try {
         const signal = this.streamAbort?.signal
         if (!signal) return
-        const response = await this.fetchImpl(`${base}/event`, {
+        // /global/event carries events for ALL directory instances;
+        // /event only covers the server-root directory.
+        const response = await this.fetchImpl(`${base}/global/event`, {
           signal,
           headers: { Accept: 'text/event-stream' },
         })
@@ -257,6 +260,15 @@ export class OpenCodeRuntime implements CodingAgentRuntime {
       event = JSON.parse(data) as OpenCodeEvent
     } catch {
       return
+    }
+    // /global/event wraps instance events in an envelope:
+    // { directory, project, payload: { type, properties } } — unwrap it.
+    if (
+      event.type === undefined &&
+      typeof (event as { payload?: unknown }).payload === 'object' &&
+      (event as { payload?: OpenCodeEvent }).payload !== null
+    ) {
+      event = (event as unknown as { payload: OpenCodeEvent }).payload
     }
     const props = event.properties ?? {}
 
@@ -334,27 +346,55 @@ export class OpenCodeRuntime implements CodingAgentRuntime {
     }
   }
 
+  /** Session directories observed at create time, for scope-correct calls. */
+  private sessionDirectories = new Map<string, string>()
+
+  private scoped(base: string, subpath: string, sessionId: string, scope?: SessionScope): string {
+    const directory = scope?.directory ?? this.sessionDirectories.get(sessionId)
+    const suffix = directory ? `?directory=${encodeURIComponent(directory)}` : ''
+    return `${base}/session/${sessionId}${subpath}${suffix}`
+  }
+
   async createSession(workDir: string, title?: string): Promise<{ id: string }> {
     const base = await this.ensureServer()
-    const response = await this.fetchImpl(`${base}/session`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ directory: workDir, ...(title ? { title } : {}) }),
-    })
+    const response = await this.fetchImpl(
+      `${base}/session?directory=${encodeURIComponent(workDir)}`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(title ? { title } : {}),
+      },
+    )
     if (!response.ok) throw new Error(`createSession failed: HTTP ${response.status}`)
     const session = (await response.json()) as { id: string }
+    this.sessionDirectories.set(session.id, workDir)
     return { id: session.id }
   }
 
-  async resumeSession(sessionId: string): Promise<boolean> {
+  async resumeSession(sessionId: string, scope?: SessionScope): Promise<boolean> {
     const base = await this.ensureServer()
-    const response = await this.fetchImpl(`${base}/session/${sessionId}`)
-    return response.ok
+    const response = await this.fetchImpl(this.scoped(base, '', sessionId, scope))
+    if (!response.ok) return false
+    // A stored session rooted in a different directory (e.g. created before
+    // the project moved) must NOT be resumed — the caller will create a
+    // fresh, correctly-rooted session instead.
+    if (scope?.directory) {
+      try {
+        const info = (await response.json()) as { directory?: string }
+        const normalize = (value: string) => value.replace(/\/+$/, '').replace(/\\/g, '/')
+        if (info.directory && normalize(info.directory) !== normalize(scope.directory)) {
+          return false
+        }
+      } catch {
+        return false
+      }
+    }
+    return true
   }
 
-  async sendMessage(sessionId: string, text: string): Promise<void> {
+  async sendMessage(sessionId: string, text: string, scope?: SessionScope): Promise<void> {
     const base = await this.ensureServer()
-    const response = await this.fetchImpl(`${base}/session/${sessionId}/message`, {
+    const response = await this.fetchImpl(this.scoped(base, '/message', sessionId, scope), {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ parts: [{ type: 'text', text }] }),
@@ -365,9 +405,9 @@ export class OpenCodeRuntime implements CodingAgentRuntime {
     }
   }
 
-  async stopSession(sessionId: string): Promise<void> {
+  async stopSession(sessionId: string, scope?: SessionScope): Promise<void> {
     const base = await this.ensureServer()
-    const response = await this.fetchImpl(`${base}/session/${sessionId}/abort`, {
+    const response = await this.fetchImpl(this.scoped(base, '/abort', sessionId, scope), {
       method: 'POST',
     })
     if (!response.ok) throw new Error(`stopSession failed: HTTP ${response.status}`)
@@ -381,26 +421,26 @@ export class OpenCodeRuntime implements CodingAgentRuntime {
     return sessionId in statuses ? 'busy' : 'idle'
   }
 
-  async listChildren(sessionId: string): Promise<string[]> {
+  async listChildren(sessionId: string, scope?: SessionScope): Promise<string[]> {
     const base = await this.ensureServer()
-    const response = await this.fetchImpl(`${base}/session/${sessionId}/children`)
+    const response = await this.fetchImpl(this.scoped(base, '/children', sessionId, scope))
     if (!response.ok) return []
     const children = (await response.json()) as unknown
     if (!Array.isArray(children)) return []
     return children.map((child) => String(child))
   }
 
-  async summarizeSession(sessionId: string): Promise<void> {
+  async summarizeSession(sessionId: string, scope?: SessionScope): Promise<void> {
     const base = await this.ensureServer()
-    const response = await this.fetchImpl(`${base}/session/${sessionId}/summarize`, {
+    const response = await this.fetchImpl(this.scoped(base, '/summarize', sessionId, scope), {
       method: 'POST',
     })
     if (!response.ok) throw new Error(`summarize failed: HTTP ${response.status}`)
   }
 
-  async listMessages(sessionId: string): Promise<ChatMessage[]> {
+  async listMessages(sessionId: string, scope?: SessionScope): Promise<ChatMessage[]> {
     const base = await this.ensureServer()
-    const response = await this.fetchImpl(`${base}/session/${sessionId}/message`)
+    const response = await this.fetchImpl(this.scoped(base, '/message', sessionId, scope))
     if (!response.ok) throw new Error(`listMessages failed: HTTP ${response.status}`)
     const entries = (await response.json()) as {
       info: OpenCodeMessage

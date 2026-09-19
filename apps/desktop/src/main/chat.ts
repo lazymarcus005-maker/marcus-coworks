@@ -147,7 +147,10 @@ export class ChatService {
     this.wire()
     const existing = this.deps.sessions.forProject(project.id)
 
-    if (existing && (await this.deps.runtime.resumeSession(existing.id))) {
+    if (
+      existing &&
+      (await this.deps.runtime.resumeSession(existing.id, { directory: project.path }))
+    ) {
       return existing.id
     }
 
@@ -170,6 +173,7 @@ export class ChatService {
 
   async send(project: ProjectWorkspace, text: string): Promise<void> {
     this.deps.pause.assertCanAct(project.id, 'send a message')
+    const scope = { directory: project.path }
     // Model-call budget: downgrades autonomy to report-only at the cap.
     if (
       this.deps.budgets &&
@@ -210,7 +214,7 @@ export class ChatService {
       )
     }
 
-    await this.deps.runtime.sendMessage(sessionId, text)
+    await this.deps.runtime.sendMessage(sessionId, text, scope)
 
     // Substantial requests create a Goal draft + initial task container
     // before broad implementation begins (spec §12.4).
@@ -240,7 +244,7 @@ export class ChatService {
     const existing = this.deps.sessions.forProject(project.id)
     if (!existing) return []
     try {
-      return await this.deps.runtime.listMessages(existing.id)
+      return await this.deps.runtime.listMessages(existing.id, { directory: project.path })
     } catch {
       return []
     }

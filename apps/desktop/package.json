@@ -34,8 +34,9 @@
     "vite-plugin-solid": "^2.11.7",
     "electron-builder": "^26.0.12"
   },
-  "description": "OpenCode Agent Studio — macOS multi-project coding-agent workspace",
+  "description": "OpenCode Agent Studio \u2014 macOS multi-project coding-agent workspace",
   "author": {
     "name": "lazymarcus005-maker"
-  }
+  },
+  "productName": "OpenCode Agent Studio"
 }

@@ -70,21 +70,27 @@ export type ChatPushEvent =
  * The stable abstraction the harness codes against (spec §28). OpenCode
  * specifics stay behind the implementing adapter.
  */
+/**
+ * Per-call project scope: OpenCode's server resolves session directories
+ * from the `?directory=` query parameter, NOT the create-session body.
+ */
+export type SessionScope = { directory?: string }
+
 export interface CodingAgentRuntime {
   detect(): Promise<RuntimeDetection>
   /** Returns the base URL of a running runtime, starting one if needed. */
   ensureServer(): Promise<string>
   createSession(workDir: string, title?: string): Promise<{ id: string }>
   /** True when the session still exists on the runtime. */
-  resumeSession(sessionId: string): Promise<boolean>
-  sendMessage(sessionId: string, text: string): Promise<void>
-  stopSession(sessionId: string): Promise<void>
-  getStatus(sessionId: string): Promise<AgentStatus>
-  listMessages(sessionId: string): Promise<ChatMessage[]>
+  resumeSession(sessionId: string, scope?: SessionScope): Promise<boolean>
+  sendMessage(sessionId: string, text: string, scope?: SessionScope): Promise<void>
+  stopSession(sessionId: string, scope?: SessionScope): Promise<void>
+  getStatus(sessionId: string, scope?: SessionScope): Promise<AgentStatus>
+  listMessages(sessionId: string, scope?: SessionScope): Promise<ChatMessage[]>
   /** Child (subagent) session ids for a session (OpenCode native delegation). */
-  listChildren(sessionId: string): Promise<string[]>
+  listChildren(sessionId: string, scope?: SessionScope): Promise<string[]>
   /** Native compaction: summarize the session (OpenCode owns compaction). */
-  summarizeSession(sessionId: string): Promise<void>
+  summarizeSession(sessionId: string, scope?: SessionScope): Promise<void>
   subscribe(listener: (event: RuntimeEvent) => void): () => void
   dispose(): Promise<void>
 }

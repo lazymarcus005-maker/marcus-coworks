@@ -37,7 +37,9 @@ export class FakeOpenCodeServer {
   }
 
   broadcast(event: unknown): void {
-    const payload = `data: ${JSON.stringify(event)}\n\n`
+    // Events reach the adapter through /global/event, which wraps each
+    // instance event in a { directory, project, payload } envelope.
+    const payload = `data: ${JSON.stringify({ directory: '.', payload: event })}\n\n`
     for (const client of this.sseClients) client.write(payload)
   }
 
@@ -55,7 +57,8 @@ export class FakeOpenCodeServer {
 
     if (req.method === 'POST' && url.pathname === '/session') {
       const id = `ses_fake_${++this.counter}`
-      const directory = (JSON.parse(body || '{}') as { directory?: string }).directory ?? ''
+      // OpenCode resolves the session directory from the ?directory= query.
+      const directory = url.searchParams.get('directory') ?? ''
       this.sessions.set(id, { id, directory, messages: [], aborted: false })
       respondJson(res, { id, directory })
       return
@@ -122,7 +125,7 @@ export class FakeOpenCodeServer {
       return
     }
 
-    if (req.method === 'GET' && url.pathname === '/event') {
+    if (req.method === 'GET' && (url.pathname === '/event' || url.pathname === '/global/event')) {
       res.writeHead(200, {
         'content-type': 'text/event-stream',
         connection: 'keep-alive',

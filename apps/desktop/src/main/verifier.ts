@@ -173,7 +173,7 @@ export class VerifierService {
       evidence,
     })
 
-    await this.deps.runtime.sendMessage(session.id, prompt)
+    await this.deps.runtime.sendMessage(session.id, prompt, { directory: input.projectPath })
     const reply = await this.awaitReply(
       this.deps.runtime,
       session.id,

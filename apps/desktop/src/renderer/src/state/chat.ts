@@ -55,14 +55,35 @@ export function createChatStore(projectId: () => string | undefined, projects: P
     window.studio.chat.onEvent((event) => {
       if ('projectId' in event && event.projectId !== projectId()) return
       switch (event.type) {
-        case 'message-started':
+        case 'message-started': {
+          // Server echo of our own optimistic user message: replace it.
+          if (event.role === 'user') {
+            setEntries((current) => {
+              const localIndex = current.findIndex(
+                (entry) => entry.id.startsWith('local-') && entry.text === '',
+              )
+              if (localIndex === -1) return current
+              const copy = [...current]
+              copy[localIndex] = { ...copy[localIndex]!, id: event.messageId }
+              return copy
+            })
+            return
+          }
           upsert({ id: event.messageId, role: event.role, text: '', model: event.model })
           return
+        }
         case 'message-text':
           upsert({ id: event.messageId, role: 'assistant', text: event.text })
           return
         case 'message-completed':
-          upsert({ id: event.messageId, role: 'assistant', text: '', error: event.error })
+          // Merge WITHOUT touching text — the streamed text must survive.
+          setEntries((current) => {
+            const index = current.findIndex((entry) => entry.id === event.messageId)
+            if (index === -1) return current
+            const copy = [...current]
+            copy[index] = { ...copy[index]!, error: event.error }
+            return copy
+          })
           return
         case 'session-status':
           setBusy(event.status === 'busy')

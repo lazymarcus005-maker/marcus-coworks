@@ -24,12 +24,15 @@ export function TabsBar(props: { store: ProjectsStore }) {
             return (
               <Show when={project()}>
                 {(p) => (
-                  <button
-                    type="button"
+                  <div
                     role="tab"
+                    tabindex={0}
                     aria-selected={store.activeId() === tab.projectId}
                     class={`tab ${store.activeId() === tab.projectId ? 'tab-active' : ''}`}
                     onClick={() => store.activateTab(tab.projectId)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') store.activateTab(tab.projectId)
+                    }}
                   >
                     <span class={`dot ${STATUS_DOT[p().status] ?? 'dot-idle'}`} />
                     <span class="tab-name">{p().name}</span>
@@ -45,7 +48,7 @@ export function TabsBar(props: { store: ProjectsStore }) {
                     >
                       ×
                     </button>
-                  </button>
+                  </div>
                 )}
               </Show>
             )
