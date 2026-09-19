@@ -1,3 +1,4 @@
+import { homedir as homeDir } from 'node:os'
 import { join } from 'node:path'
 import { LockManager } from '@studio/lock-manager'
 import { OpenCodeRuntime } from '@studio/opencode-adapter'
@@ -29,6 +30,7 @@ import { AttemptManager, DEFAULT_MAX_ATTEMPTS } from './attempts.js'
 import { ChatService } from './chat.js'
 import { listDirectory } from './explorer.js'
 import { InboxManager } from './inbox.js'
+import { McpManager } from './mcp.js'
 import { PauseManager } from './pause.js'
 import { ProviderService } from './providers.js'
 import { type TerminalPushEvent, TerminalService } from './terminal.js'
@@ -51,6 +53,7 @@ export interface StudioServices {
   verifier: VerifierService
   attempts: AttemptManager
   pause: PauseManager
+  mcp: McpManager
   policy: typeof loadPolicy
   runtime: OpenCodeRuntime
   terminals: TerminalService
@@ -124,6 +127,21 @@ function buildServices(
   })
 
   const runtime = new OpenCodeRuntime()
+  const mcp = new McpManager({
+    globalConfigPath: join(homeDir(), '.config', 'opencode', 'opencode.json'),
+    runtimeBaseUrl: () => runtime.ensureServer(),
+    connect: async (base, name) => {
+      try {
+        const response = await fetch(`${base}/mcp/${encodeURIComponent(name)}/connect`, {
+          method: 'POST',
+        })
+        return { ok: response.ok, status: response.status }
+      } catch (cause) {
+        return { ok: false, body: String(cause) }
+      }
+    },
+  })
+
   const settings = new SettingsRepository(db)
   const pause = new PauseManager({
     settings,
@@ -190,6 +208,7 @@ function buildServices(
     verifier,
     attempts: attemptManager,
     pause,
+    mcp,
     policy: loadPolicy,
     runtime,
     terminals,

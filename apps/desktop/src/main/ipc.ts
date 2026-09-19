@@ -307,6 +307,29 @@ export function registerIpcHandlers(ipcMain: IpcMainLike, deps: MainDependencies
           : deps.services.verification.historyForProject(projectId),
       }
     },
+    'mcp/list': (_event, request) => {
+      const { projectPath } = request as IpcContract['mcp/list']['request']
+      return { servers: deps.services.mcp.list(projectPath) }
+    },
+    'mcp/save': (_event, request) => {
+      const { config, projectPath } = request as IpcContract['mcp/save']['request']
+      return { config: deps.services.mcp.save(config, projectPath) }
+    },
+    'mcp/remove': (_event, request) => {
+      const { name, scope, projectPath } = request as IpcContract['mcp/remove']['request']
+      deps.services.mcp.remove(name, scope, projectPath)
+      return undefined
+    },
+    'mcp/set-enabled': (_event, request) => {
+      const { name, scope, enabled, projectPath } =
+        request as IpcContract['mcp/set-enabled']['request']
+      deps.services.mcp.setEnabled(name, scope, enabled, projectPath)
+      return undefined
+    },
+    'mcp/test': (_event, request) => {
+      const { name } = request as IpcContract['mcp/test']['request']
+      return deps.services.mcp.test(name)
+    },
     'pause/state': () => deps.services.pause.snapshot(),
     'pause/set-global': (_event, request) => {
       const { paused } = request as IpcContract['pause/set-global']['request']

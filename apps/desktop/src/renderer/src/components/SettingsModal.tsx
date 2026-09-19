@@ -18,7 +18,12 @@ const EMPTY_DRAFT: Draft = {
   apiKey: '',
 }
 
-export function SettingsModal(props: { onClose: () => void }) {
+import { McpPane } from './McpPane.js'
+
+export function SettingsModal(props: {
+  onClose: () => void
+  projectPath?: () => string | undefined
+}) {
   const [providers, { refetch }] = createResource(
     async () => (await window.studio.providers.list()).providers,
   )
@@ -102,6 +107,10 @@ export function SettingsModal(props: { onClose: () => void }) {
           </button>
         </div>
         <div class="modal-body">
+          <section class="settings-section">
+            <h3>MCP Servers</h3>
+            <McpPane projectPath={props.projectPath} />
+          </section>
           <section class="settings-section">
             <h3>LLM Providers</h3>
             <Show when={(providers() ?? []).length > 0}>

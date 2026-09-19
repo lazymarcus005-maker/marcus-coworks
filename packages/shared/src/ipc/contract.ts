@@ -4,6 +4,7 @@ import type { ChatMessage, ChatPushEvent } from '../domain/chat.js'
 import type { FileEntry, TerminalInfo } from '../domain/fs.js'
 import type { InboxDecision, InboxItem, InboxItemStatus } from '../domain/inbox.js'
 import type { AcquireResult, ScopeLock } from '../domain/lock.js'
+import type { McpConnectionStatus, McpScope, McpServerConfig } from '../domain/mcp.js'
 import type { PauseState } from '../domain/pause.js'
 import type {
   ActivityEvent,
@@ -194,6 +195,20 @@ export interface IpcContract {
     request: { taskId: string }
     response: { attempts: AttemptRecord[] }
   }
+  'mcp/list': { request: { projectPath?: string }; response: { servers: McpServerConfig[] } }
+  'mcp/save': {
+    request: { config: McpServerConfig; projectPath?: string }
+    response: { config: McpServerConfig }
+  }
+  'mcp/remove': {
+    request: { name: string; scope: McpScope; projectPath?: string }
+    response: undefined
+  }
+  'mcp/set-enabled': {
+    request: { name: string; scope: McpScope; enabled: boolean; projectPath?: string }
+    response: undefined
+  }
+  'mcp/test': { request: { name: string }; response: McpConnectionStatus }
   'pause/state': {
     request: undefined
     response: PauseState
@@ -359,6 +374,13 @@ export interface StudioApi {
       implementerSessionId?: string,
     ): Promise<{ decision: import('../domain/verifier.js').VerifierDecision }>
   }
+  mcp: {
+    list(projectPath?: string): Promise<{ servers: McpServerConfig[] }>
+    save(config: McpServerConfig, projectPath?: string): Promise<{ config: McpServerConfig }>
+    remove(name: string, scope: McpScope, projectPath?: string): Promise<void>
+    setEnabled(name: string, scope: McpScope, enabled: boolean, projectPath?: string): Promise<void>
+    test(name: string): Promise<McpConnectionStatus>
+  }
   pause: {
     state(): Promise<PauseState>
     setGlobal(paused: boolean): Promise<PauseState>
@@ -438,6 +460,11 @@ export function ipcChannels(): IpcChannel[] {
     'verification/run',
     'verification/history',
     'verifier/review',
+    'mcp/list',
+    'mcp/save',
+    'mcp/remove',
+    'mcp/set-enabled',
+    'mcp/test',
     'pause/state',
     'pause/set-global',
     'pause/set-project',

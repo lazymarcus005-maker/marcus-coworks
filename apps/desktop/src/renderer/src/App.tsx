@@ -52,7 +52,10 @@ export default function App() {
         </Show>
       </main>
       <Show when={settingsOpen()}>
-        <SettingsModal onClose={() => setSettingsOpen(false)} />
+        <SettingsModal
+          onClose={() => setSettingsOpen(false)}
+          projectPath={() => store.activeProject()?.path}
+        />
       </Show>
     </div>
   )

@@ -110,6 +110,14 @@ const api: StudioApi = {
     review: (projectId, taskId, worktreeId, implementerSessionId) =>
       invoke('verifier/review', { projectId, taskId, worktreeId, implementerSessionId }),
   },
+  mcp: {
+    list: (projectPath) => invoke('mcp/list', { projectPath }),
+    save: (config, projectPath) => invoke('mcp/save', { config, projectPath }),
+    remove: (name, scope, projectPath) => invoke('mcp/remove', { name, scope, projectPath }),
+    setEnabled: (name, scope, enabled, projectPath) =>
+      invoke('mcp/set-enabled', { name, scope, enabled, projectPath }),
+    test: (name) => invoke('mcp/test', { name }),
+  },
   pause: {
     state: () => invoke('pause/state', undefined),
     setGlobal: (paused) => invoke('pause/set-global', { paused }),
