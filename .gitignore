@@ -7,3 +7,4 @@ dist/
 .env.*
 coverage/
 .vite/
+apps/desktop/release/

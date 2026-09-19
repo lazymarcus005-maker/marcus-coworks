@@ -1,0 +1,29 @@
+appId: com.marcuscoworks.agent-studio
+productName: OpenCode Agent Studio
+directories:
+  output: release
+  buildResources: build
+files:
+  - out/**
+  - package.json
+asarUnpack:
+  - "**/node_modules/node-pty/**"
+mac:
+  target:
+    - target: dmg
+      arch: [arm64]
+    - target: zip
+      arch: [arm64]
+  category: public.app-category.developer-tools
+  # Signing/notarization activate automatically when these env vars are set
+  # (CSC_LINK + CSC_KEYCHAIN_PASSWORD for identity; APPLE_ID + APPLE_APP_SPECIFIC_PASSWORD
+  # + APPLE_TEAM_ID for notarization). Without them the build stays ad-hoc/unsigned,
+  # which is correct for local development.
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  darkModeSupport: true
+  extendInfo:
+    NSHumanReadableCopyright: Copyright © 2026 marcus-coworks
+publish: null
