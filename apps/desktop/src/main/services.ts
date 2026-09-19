@@ -29,6 +29,7 @@ import { InboxManager } from './inbox.js'
 import { ProviderService } from './providers.js'
 import { type TerminalPushEvent, TerminalService } from './terminal.js'
 import { VerificationManager } from './verification.js'
+import { VerifierService } from './verifier.js'
 
 export const KEYCHAIN_SERVICE = 'com.marcus-coworks.agent-studio'
 
@@ -43,6 +44,7 @@ export interface StudioServices {
   locks: LockManager
   inbox: InboxManager
   verification: VerificationManager
+  verifier: VerifierService
   policy: typeof loadPolicy
   runtime: OpenCodeRuntime
   terminals: TerminalService
@@ -116,6 +118,17 @@ function buildServices(
   })
 
   const runtime = new OpenCodeRuntime()
+  const verifier = new VerifierService({
+    runtime,
+    tasks,
+    tasksRepo: new TaskRepository(db),
+    goals: new GoalRepository(db),
+    evidence: evidenceRepo,
+    worktrees,
+    inbox,
+    activity,
+  })
+
   const chat = new ChatService({
     runtime,
     projects,
@@ -139,6 +152,7 @@ function buildServices(
     locks,
     inbox,
     verification,
+    verifier,
     policy: loadPolicy,
     runtime,
     terminals,

@@ -125,6 +125,23 @@ export class WorktreeManager {
   }
 
   /**
+   * Deterministic fingerprint of the worktree's dirty state (porcelain
+   * status, order-normalized). Equal fingerprints mean no file changed.
+   */
+  async statusFingerprint(record: WorktreeRecord): Promise<string> {
+    const status = await this.deps.git(record.path, ['status', '--porcelain'])
+    if (status.code !== 0) {
+      throw new WorktreeManagerError(`git status failed: ${status.stderr.trim()}`)
+    }
+    return status.stdout
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line !== '')
+      .sort()
+      .join('\n')
+  }
+
+  /**
    * Captures the full diff of an attempt (committed since the base branch
    * plus uncommitted changes) and persists it as a patch file, so a
    * rejected/discarded attempt stays recoverable.

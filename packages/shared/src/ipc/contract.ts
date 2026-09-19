@@ -174,6 +174,15 @@ export interface IpcContract {
     request: { taskId?: string; projectId: string }
     response: { evidence: VerificationEvidence[] }
   }
+  'verifier/review': {
+    request: {
+      projectId: string
+      taskId: string
+      worktreeId: string
+      implementerSessionId?: string
+    }
+    response: { decision: import('../domain/verifier.js').VerifierDecision }
+  }
 }
 
 /** Main → renderer push channel for live chat events. */
@@ -309,6 +318,14 @@ export interface StudioApi {
     ): Promise<VerificationRun>
     history(projectId: string, taskId?: string): Promise<{ evidence: VerificationEvidence[] }>
   }
+  verifier: {
+    review(
+      projectId: string,
+      taskId: string,
+      worktreeId: string,
+      implementerSessionId?: string,
+    ): Promise<{ decision: import('../domain/verifier.js').VerifierDecision }>
+  }
 }
 
 export function ipcChannels(): IpcChannel[] {
@@ -359,5 +376,6 @@ export function ipcChannels(): IpcChannel[] {
     'inbox/resolve',
     'verification/run',
     'verification/history',
+    'verifier/review',
   ]
 }

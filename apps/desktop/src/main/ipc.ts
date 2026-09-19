@@ -307,6 +307,20 @@ export function registerIpcHandlers(ipcMain: IpcMainLike, deps: MainDependencies
           : deps.services.verification.historyForProject(projectId),
       }
     },
+    'verifier/review': async (_event, request) => {
+      const { projectId, taskId, worktreeId, implementerSessionId } =
+        request as IpcContract['verifier/review']['request']
+      const project = manager().getProject(projectId)
+      const decision = await deps.services.verifier.reviewAttempt({
+        projectId,
+        projectPath: project.path,
+        taskId,
+        worktreeId,
+        implementerSessionId,
+      })
+      await deps.services.verifier.applyDecision(taskId, decision)
+      return { decision }
+    },
   }
 
   for (const [channel, handler] of Object.entries(handlers)) {

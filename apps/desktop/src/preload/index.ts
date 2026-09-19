@@ -106,6 +106,10 @@ const api: StudioApi = {
       }),
     history: (projectId, taskId) => invoke('verification/history', { projectId, taskId }),
   },
+  verifier: {
+    review: (projectId, taskId, worktreeId, implementerSessionId) =>
+      invoke('verifier/review', { projectId, taskId, worktreeId, implementerSessionId }),
+  },
 }
 
 contextBridge.exposeInMainWorld('studio', api)
