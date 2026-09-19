@@ -35,6 +35,7 @@ import { InboxManager } from './inbox.js'
 import { McpManager } from './mcp.js'
 import { PauseManager } from './pause.js'
 import { ProviderService } from './providers.js'
+import { SchedulerService } from './scheduler.js'
 import { SkillsManager } from './skills.js'
 import { type TerminalPushEvent, TerminalService } from './terminal.js'
 import { VerificationManager } from './verification.js'
@@ -60,6 +61,7 @@ export interface StudioServices {
   skills: SkillsManager
   agents: AgentManager
   context: ContextManager
+  scheduler: SchedulerService
   policy: typeof loadPolicy
   runtime: OpenCodeRuntime
   terminals: TerminalService
@@ -122,6 +124,8 @@ function buildServices(
     evidence: evidenceRepo,
     activity,
     outputDir: join(userDataDir, 'verification-logs'),
+    acquireShellSlot: () => scheduler.acquire('shell', { label: 'verification' }),
+    releaseShellSlot: (ticketId) => scheduler.release(ticketId),
   })
 
   const inbox = new InboxManager({
@@ -133,6 +137,8 @@ function buildServices(
   })
 
   const runtime = new OpenCodeRuntime()
+  const scheduler = new SchedulerService({ settings: new SettingsRepository(db), activity })
+
   const context = new ContextManager({ runtime, activity })
 
   const agents = new AgentManager({ runtime, activity })
@@ -156,9 +162,8 @@ function buildServices(
     },
   })
 
-  const settings = new SettingsRepository(db)
   const pause = new PauseManager({
-    settings,
+    settings: new SettingsRepository(db),
     activity,
     reconcileLocks: (projectId) => {
       locks.reconcile(projectId)
@@ -226,6 +231,7 @@ function buildServices(
     skills,
     agents,
     context,
+    scheduler,
     policy: loadPolicy,
     runtime,
     terminals,

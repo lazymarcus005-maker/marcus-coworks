@@ -307,6 +307,17 @@ export function registerIpcHandlers(ipcMain: IpcMainLike, deps: MainDependencies
           : deps.services.verification.historyForProject(projectId),
       }
     },
+    'scheduler/snapshot': () => deps.services.scheduler.snapshot(),
+    'scheduler/set-limit': (_event, request) => {
+      const { resource, limit } = request as IpcContract['scheduler/set-limit']['request']
+      deps.services.scheduler.setLimit(resource, limit)
+      return deps.services.scheduler.snapshot()
+    },
+    'scheduler/cancel': (_event, request) => {
+      const { ticketId } = request as IpcContract['scheduler/cancel']['request']
+      deps.services.scheduler.cancel(ticketId)
+      return deps.services.scheduler.snapshot()
+    },
     'context/usage': async (_event, request) => {
       const { sessionId, model } = request as IpcContract['context/usage']['request']
       return deps.services.context.usageFor(sessionId, model)

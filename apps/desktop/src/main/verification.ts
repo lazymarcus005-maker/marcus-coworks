@@ -38,6 +38,9 @@ export interface VerificationManagerDeps {
   evidence: EvidenceRepository
   activity: ActivityRepository
   run?: ShellRunner
+  /** Optional shell-slot gate (scheduler). */
+  acquireShellSlot?: () => Promise<string>
+  releaseShellSlot?: (ticketId: string) => void
   now?: () => Date
   newId?: () => string
   outputDir?: string
@@ -144,11 +147,17 @@ export class VerificationManager {
     context: { taskId?: string; worktreeId?: string; attempt?: number; timeoutMs?: number },
   ): Promise<VerificationEvidence> {
     const startedAt = this.now().toISOString()
-    const outcome = await this.runCommand(
-      command.command,
-      project.path,
-      context.timeoutMs ?? 10 * 60 * 1000,
-    )
+    const ticket = (await this.deps.acquireShellSlot?.()) ?? 'unlimited'
+    let outcome
+    try {
+      outcome = await this.runCommand(
+        command.command,
+        project.path,
+        context.timeoutMs ?? 10 * 60 * 1000,
+      )
+    } finally {
+      this.deps.releaseShellSlot?.(ticket)
+    }
     const finishedAt = this.now().toISOString()
 
     const output = `${outcome.stdout}\n${outcome.stderr}`

@@ -7,6 +7,7 @@ import { ChatPanel } from './ChatPanel.js'
 import { ContextPanel } from './ContextPanel.js'
 import { ExplorerPanel } from './ExplorerPanel.js'
 import { ProjectPauseButton } from './PauseControls.js'
+import { SchedulerPanel } from './SchedulerPanel.js'
 import { TasksPanel } from './TasksPanel.js'
 import { TerminalDock } from './TerminalDock.js'
 

@@ -110,6 +110,11 @@ const api: StudioApi = {
     review: (projectId, taskId, worktreeId, implementerSessionId) =>
       invoke('verifier/review', { projectId, taskId, worktreeId, implementerSessionId }),
   },
+  scheduler: {
+    snapshot: () => invoke('scheduler/snapshot', undefined),
+    setLimit: (resource, limit) => invoke('scheduler/set-limit', { resource, limit }),
+    cancel: (ticketId) => invoke('scheduler/cancel', { ticketId }),
+  },
   context: {
     usage: (sessionId, model) => invoke('context/usage', { sessionId, model }),
     compact: (sessionId) => invoke('context/compact', { sessionId }),

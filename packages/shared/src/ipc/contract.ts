@@ -15,6 +15,7 @@ import type {
   RemoveProjectOptions,
 } from '../domain/project.js'
 import type { ConnectionTestResult, LlmProvider } from '../domain/provider.js'
+import type { SchedulerSnapshot } from '../domain/scheduler.js'
 import type { SkillCreateInput, SkillInfo, SkillScope } from '../domain/skills.js'
 import type { GoalContract, HarnessTask, TaskStatus, TaskTransition } from '../domain/task.js'
 import type {
@@ -198,6 +199,15 @@ export interface IpcContract {
     request: { taskId: string }
     response: { attempts: AttemptRecord[] }
   }
+  'scheduler/snapshot': {
+    request: undefined
+    response: SchedulerSnapshot
+  }
+  'scheduler/set-limit': {
+    request: { resource: 'remote-llm' | 'local-llm' | 'shell'; limit: number }
+    response: SchedulerSnapshot
+  }
+  'scheduler/cancel': { request: { ticketId: string }; response: SchedulerSnapshot }
   'context/usage': {
     request: { sessionId: string; model: string }
     response: ContextUsage
@@ -421,6 +431,14 @@ export interface StudioApi {
       implementerSessionId?: string,
     ): Promise<{ decision: import('../domain/verifier.js').VerifierDecision }>
   }
+  scheduler: {
+    snapshot(): Promise<SchedulerSnapshot>
+    setLimit(
+      resource: 'remote-llm' | 'local-llm' | 'shell',
+      limit: number,
+    ): Promise<SchedulerSnapshot>
+    cancel(ticketId: string): Promise<SchedulerSnapshot>
+  }
   context: {
     usage(sessionId: string, model: string): Promise<ContextUsage>
     compact(sessionId: string): Promise<void>
@@ -544,6 +562,9 @@ export function ipcChannels(): IpcChannel[] {
     'verification/run',
     'verification/history',
     'verifier/review',
+    'scheduler/snapshot',
+    'scheduler/set-limit',
+    'scheduler/cancel',
     'context/usage',
     'context/compact',
     'context/switch-check',
