@@ -1,5 +1,5 @@
 import type { NetworkEvent, NetworkProfileName } from '@studio/shared'
-import { createEffect, createSignal, For, Show } from 'solid-js'
+import { createEffect, createSignal, For, onCleanup, Show } from 'solid-js'
 
 /** Network activity inspector + profile selector (P4.1–4.2). */
 export function NetworkPane() {
