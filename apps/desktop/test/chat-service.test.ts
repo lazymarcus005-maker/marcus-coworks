@@ -3,12 +3,15 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import {
   ActivityRepository,
+  GoalRepository,
   migrate,
   ProjectRepository,
   SessionRepository,
   SqliteDb,
+  TaskRepository,
 } from '@studio/persistence'
 import type { ChatPushEvent, CodingAgentRuntime, RuntimeEvent } from '@studio/shared'
+import { TaskManager } from '@studio/task-manager'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { ChatService } from '../src/main/chat.js'
 
@@ -81,6 +84,11 @@ beforeAll(() => {
     projects,
     sessions: new SessionRepository(db),
     activity: new ActivityRepository(db),
+    tasks: new TaskManager({
+      tasks: new TaskRepository(db),
+      goals: new GoalRepository(db),
+      activity: new ActivityRepository(db),
+    }),
     onEvent: (event) => pushed.push(event),
     now: () => new Date('2026-09-19T00:00:00Z'),
   })
@@ -154,5 +162,46 @@ describe('ChatService', () => {
     expect(runtime.sent).toEqual([{ sessionId: 'ses_fake_1', text: 'do something' }])
     await chat.stop(project)
     expect(runtime.aborted).toEqual(['ses_fake_1'])
+  })
+
+  it('a substantial request creates a goal draft and initial task, pushing tasks-changed', async () => {
+    const project = projects.get('proj-2')!
+    await projects.insert({
+      id: 'proj-2',
+      name: 'Beta',
+      path: '/tmp/beta',
+      status: 'idle',
+      createdAt: new Date().toISOString(),
+      lastActiveAt: new Date().toISOString(),
+    })
+
+    const objective = `Refactor the auth module end to end. ${'Detail '.repeat(30)}`
+    await chat.send(projects.get('proj-2')!, objective)
+
+    const goal = db.get('SELECT * FROM goals WHERE project_id = ?', 'proj-2')
+    expect(goal?.status).toBe('draft')
+    const task = db.get('SELECT * FROM tasks WHERE project_id = ?', 'proj-2')
+    expect(task?.title).toBe('Break down this goal into tasks')
+    expect(pushed).toContainEqual({ type: 'tasks-changed', projectId: 'proj-2' })
+  })
+
+  it('runtime todo updates sync into the durable store and notify the renderer', async () => {
+    chat.wire()
+    runtime.emit({
+      type: 'todos-updated',
+      sessionId: 'ses_fake_1',
+      todos: [
+        { id: 't1', content: 'Analyze', status: 'in_progress', priority: 'high' },
+        { id: 't2', content: 'Implement', status: 'pending', priority: 'medium' },
+      ],
+    })
+
+    const synced = db.all(
+      'SELECT * FROM tasks WHERE project_id = ? AND source = ?',
+      'proj-1',
+      'opencode',
+    )
+    expect(synced.map((row) => String(row.id))).toEqual(['oc:t1', 'oc:t2'])
+    expect(pushed).toContainEqual({ type: 'tasks-changed', projectId: 'proj-1' })
   })
 })

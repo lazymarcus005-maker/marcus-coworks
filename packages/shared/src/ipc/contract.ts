@@ -7,6 +7,7 @@ import type {
   RemoveProjectOptions,
 } from '../domain/project.js'
 import type { ConnectionTestResult, LlmProvider } from '../domain/provider.js'
+import type { GoalSummary, HarnessTask, TaskStatus } from '../domain/task.js'
 
 /**
  * The single source of truth for the renderer <-> main IPC surface.
@@ -71,6 +72,27 @@ export interface IpcContract {
     request: { projectId: string }
     response: { messages: ChatMessage[] }
   }
+  'tasks/state': {
+    request: { projectId: string }
+    response: { goal?: GoalSummary; tasks: HarnessTask[] }
+  }
+  'tasks/create-goal': {
+    request: { projectId: string; objective: string }
+    response: { goal: GoalSummary }
+  }
+  'tasks/update-goal': {
+    request: { goalId: string; objective: string }
+    response: { goal: GoalSummary }
+  }
+  'tasks/add': {
+    request: { projectId: string; title: string; description?: string }
+    response: { task: HarnessTask }
+  }
+  'tasks/update': {
+    request: { taskId: string; title?: string; description?: string; status?: TaskStatus }
+    response: { task: HarnessTask }
+  }
+  'tasks/cancel': { request: { taskId: string }; response: { task: HarnessTask } }
 }
 
 /** Main → renderer push channel for live chat events. */
@@ -123,6 +145,17 @@ export interface StudioApi {
     history(projectId: string): Promise<{ messages: ChatMessage[] }>
     /** Subscribes to pushed chat events; returns an unsubscribe function. */
     onEvent(listener: (event: ChatPushEvent) => void): () => void
+  }
+  tasks: {
+    state(projectId: string): Promise<{ goal?: GoalSummary; tasks: HarnessTask[] }>
+    createGoal(projectId: string, objective: string): Promise<{ goal: GoalSummary }>
+    updateGoal(goalId: string, objective: string): Promise<{ goal: GoalSummary }>
+    add(projectId: string, title: string, description?: string): Promise<{ task: HarnessTask }>
+    update(
+      taskId: string,
+      fields: { title?: string; description?: string; status?: TaskStatus },
+    ): Promise<{ task: HarnessTask }>
+    cancel(taskId: string): Promise<{ task: HarnessTask }>
   }
 }
 

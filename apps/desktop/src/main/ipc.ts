@@ -115,6 +115,31 @@ export function registerIpcHandlers(ipcMain: IpcMainLike, deps: MainDependencies
       const project = manager().getProject(projectId)
       return deps.services.chat.history(project)
     },
+    'tasks/state': (_event, request) => {
+      const { projectId } = request as IpcContract['tasks/state']['request']
+      return deps.services.tasks.stateForProject(projectId)
+    },
+    'tasks/create-goal': (_event, request) => {
+      const { projectId, objective } = request as IpcContract['tasks/create-goal']['request']
+      return { goal: deps.services.tasks.createGoalDraft(projectId, objective) }
+    },
+    'tasks/update-goal': (_event, request) => {
+      const { goalId, objective } = request as IpcContract['tasks/update-goal']['request']
+      return { goal: deps.services.tasks.updateGoalObjective(goalId, objective) }
+    },
+    'tasks/add': (_event, request) => {
+      const { projectId, title, description } = request as IpcContract['tasks/add']['request']
+      return { task: deps.services.tasks.addTask(projectId, { title, description }) }
+    },
+    'tasks/update': (_event, request) => {
+      const { taskId, title, description, status } =
+        request as IpcContract['tasks/update']['request']
+      return { task: deps.services.tasks.updateTask(taskId, { title, description, status }) }
+    },
+    'tasks/cancel': (_event, request) => {
+      const { taskId } = request as IpcContract['tasks/cancel']['request']
+      return { task: deps.services.tasks.cancelTask(taskId) }
+    },
   }
 
   for (const [channel, handler] of Object.entries(handlers)) {

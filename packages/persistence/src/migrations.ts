@@ -117,7 +117,15 @@ CREATE INDEX idx_goals_project ON goals(project_id);
 CREATE INDEX idx_sessions_project ON sessions(project_id);
 `
 
-export const MIGRATIONS: Migration[] = [{ id: 1, name: 'initial_schema', sql: MIGRATION_0001 }]
+const MIGRATION_0002 = `
+ALTER TABLE tasks ADD COLUMN source TEXT NOT NULL DEFAULT 'user';
+ALTER TABLE tasks ADD COLUMN updated_at TEXT;
+`
+
+export const MIGRATIONS: Migration[] = [
+  { id: 1, name: 'initial_schema', sql: MIGRATION_0001 },
+  { id: 2, name: 'task_source_and_updated_at', sql: MIGRATION_0002 },
+]
 
 /** Applies pending migrations. Repeatable: already-applied ids are skipped. */
 export function migrate(db: SqliteDb): void {

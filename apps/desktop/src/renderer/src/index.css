@@ -360,3 +360,165 @@ body {
 .chat-input:focus {
   border-color: var(--accent);
 }
+
+/* ---- tasks panel ---- */
+
+.tasks-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 14px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.tasks-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 10px 0 8px;
+}
+
+.tasks-header h3 {
+  margin: 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+}
+
+.tasks-empty-goal {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.goal-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.goal-objective {
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.badge-draft {
+  color: var(--warn);
+  border-color: var(--warn);
+  align-self: flex-start;
+}
+
+.task-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.task-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 4px 4px;
+  border-radius: 6px;
+}
+
+.task-item:hover {
+  background: var(--bg-elevated);
+}
+
+.task-status {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1.3;
+  padding: 0 2px;
+}
+
+.task-in_progress .task-status {
+  color: var(--accent);
+}
+
+.task-done .task-status {
+  color: var(--ok);
+}
+
+.task-done .task-title {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.task-blocked .task-status,
+.task-cancelled .task-status {
+  color: var(--err);
+}
+
+.task-title {
+  flex: 1;
+  font-size: 12px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.task-cancelled .task-title {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.badge-runtime {
+  font-size: 10px;
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.task-cancel {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 4px;
+}
+
+.task-cancel:hover {
+  color: var(--err);
+}
+
+.task-add {
+  margin-top: 8px;
+}
+
+.task-add-input {
+  width: 100%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  padding: 6px 10px;
+  outline: none;
+}
+
+.task-add-input:focus {
+  border-color: var(--accent);
+}
+
+.btn-small {
+  font-size: 11px;
+  padding: 2px 8px;
+}

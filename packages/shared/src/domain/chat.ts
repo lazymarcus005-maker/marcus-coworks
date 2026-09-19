@@ -1,3 +1,5 @@
+import type { RuntimeTodo } from './task.js'
+
 /**
  * Chat/agent runtime domain (spec §28).
  * Shared between the adapter, main process, and renderer chat UI.
@@ -36,6 +38,7 @@ export type RuntimeEvent =
   | { type: 'message-text'; sessionId: string; messageId: string; text: string }
   | { type: 'message-completed'; sessionId: string; messageId: string; error?: string }
   | { type: 'session-status'; sessionId: string; status: AgentStatus }
+  | { type: 'todos-updated'; sessionId: string; todos: RuntimeTodo[] }
   | { type: 'runtime-error'; error: string }
 
 /** Renderer-facing chat event: a runtime event resolved to its project. */
@@ -52,6 +55,8 @@ export type ChatPushEvent =
   | { type: 'message-completed'; projectId: string; messageId: string; error?: string }
   | { type: 'session-status'; projectId: string; status: AgentStatus }
   | { type: 'runtime-error'; error: string }
+  /** Durable task state changed for this project (goal/task/TODO sync). */
+  | { type: 'tasks-changed'; projectId: string }
 
 /**
  * The stable abstraction the harness codes against (spec §28). OpenCode

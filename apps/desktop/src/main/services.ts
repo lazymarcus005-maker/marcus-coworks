@@ -2,16 +2,19 @@ import { join } from 'node:path'
 import { OpenCodeRuntime } from '@studio/opencode-adapter'
 import {
   ActivityRepository,
+  GoalRepository,
   migrate,
   ProjectRepository,
   ProviderRepository,
   SessionRepository,
   SqliteDb,
   TabRepository,
+  TaskRepository,
 } from '@studio/persistence'
 import { ProjectManager } from '@studio/project-manager'
 import { KeychainSecretStore, type SecretStore } from '@studio/secrets'
 import type { ChatPushEvent } from '@studio/shared'
+import { TaskManager } from '@studio/task-manager'
 import { ChatService } from './chat.js'
 import { ProviderService } from './providers.js'
 
@@ -23,6 +26,7 @@ export interface StudioServices {
   secrets: SecretStore
   providers: ProviderService
   chat: ChatService
+  tasks: TaskManager
   runtime: OpenCodeRuntime
 }
 
@@ -47,6 +51,11 @@ function buildServices(
     providers: new ProviderRepository(db),
     secrets,
   })
+  const tasks = new TaskManager({
+    tasks: new TaskRepository(db),
+    goals: new GoalRepository(db),
+    activity,
+  })
 
   const runtime = new OpenCodeRuntime()
   const chat = new ChatService({
@@ -54,10 +63,11 @@ function buildServices(
     projects,
     sessions,
     activity,
+    tasks,
     onEvent: onChatEvent,
   })
 
-  return { db, projectManager, secrets, providers, chat, runtime }
+  return { db, projectManager, secrets, providers, chat, tasks, runtime }
 }
 
 /**

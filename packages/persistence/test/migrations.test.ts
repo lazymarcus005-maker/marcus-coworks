@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { migrate, SqliteDb } from '../src/index.js'
+import { MIGRATIONS, migrate, SqliteDb } from '../src/index.js'
 
 let dir: string
 let db: SqliteDb
@@ -48,7 +48,13 @@ describe('migrations', () => {
     migrate(db)
     migrate(db)
     const applied = db.all('SELECT id FROM schema_migrations')
-    expect(applied).toHaveLength(1)
+    expect(applied).toHaveLength(MIGRATIONS.length)
+  })
+
+  it('applies incremental migrations to the tasks table', () => {
+    const columns = db.all("PRAGMA table_info('tasks')").map((row) => String(row.name))
+    expect(columns).toContain('source')
+    expect(columns).toContain('updated_at')
   })
 
   it('stores plaintext-credential-free schema (providers reference secrets by id)', () => {

@@ -46,6 +46,14 @@ const api: StudioApi = {
       return () => ipcRenderer.removeListener(CHAT_EVENT_CHANNEL, handler)
     },
   },
+  tasks: {
+    state: (projectId) => invoke('tasks/state', { projectId }),
+    createGoal: (projectId, objective) => invoke('tasks/create-goal', { projectId, objective }),
+    updateGoal: (goalId, objective) => invoke('tasks/update-goal', { goalId, objective }),
+    add: (projectId, title, description) => invoke('tasks/add', { projectId, title, description }),
+    update: (taskId, fields) => invoke('tasks/update', { taskId, ...fields }),
+    cancel: (taskId) => invoke('tasks/cancel', { taskId }),
+  },
 }
 
 contextBridge.exposeInMainWorld('studio', api)

@@ -3,6 +3,7 @@ import { createSignal, Show } from 'solid-js'
 import { createChatStore } from '../state/chat.js'
 import type { ProjectsStore } from '../state/projects.js'
 import { ChatPanel } from './ChatPanel.js'
+import { TasksPanel } from './TasksPanel.js'
 
 export function ProjectView(props: { project: ProjectWorkspace; store: ProjectsStore }) {
   const [editing, setEditing] = createSignal(false)
@@ -94,10 +95,7 @@ export function ProjectView(props: { project: ProjectWorkspace; store: ProjectsS
           <ChatPanel store={chat} projectId={() => props.project?.id} />
         </div>
         <div class="side-column">
-          <div class="placeholder-panel">
-            <p>Tasks, Terminal, and Explorer panels arrive with their tickets.</p>
-            <p class="muted">Session state persists per project.</p>
-          </div>
+          <TasksPanel projectId={() => props.project?.id} />
         </div>
       </div>
     </div>

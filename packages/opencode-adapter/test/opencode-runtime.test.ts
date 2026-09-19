@@ -128,6 +128,35 @@ describe('OpenCodeRuntime against a fake server', () => {
       .map((event) => (event.type === 'session-status' ? event.status : ''))
     expect(statuses).toEqual(['busy', 'idle'])
   })
+
+  it('maps todo.updated SSE events to todos-updated runtime events', async () => {
+    const session = await runtime.createSession('/tmp/project-a')
+
+    server.broadcast({
+      type: 'todo.updated',
+      properties: {
+        sessionID: session.id,
+        todos: [
+          { id: 't1', content: 'Analyze', status: 'in_progress', priority: 'high' },
+          { id: 't2', content: 'Implement', status: 'weird-status', priority: 'low' },
+        ],
+      },
+    })
+
+    await waitFor(() => events.some((event) => event.type === 'todos-updated'))
+
+    const todosEvent = events.find((event) => event.type === 'todos-updated')
+    expect(todosEvent).toMatchObject({ sessionId: session.id })
+    if (todosEvent?.type !== 'todos-updated') throw new Error('unreachable')
+    expect(todosEvent.todos[0]).toMatchObject({
+      id: 't1',
+      content: 'Analyze',
+      status: 'in_progress',
+      priority: 'high',
+    })
+    // Unknown runtime statuses normalize to pending rather than dropped.
+    expect(todosEvent.todos[1]?.status).toBe('pending')
+  })
 })
 
 async function waitFor(predicate: () => boolean, timeoutMs = 3_000): Promise<void> {

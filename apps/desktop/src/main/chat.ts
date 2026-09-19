@@ -6,12 +6,14 @@ import type {
   ProjectWorkspace,
   RuntimeEvent,
 } from '@studio/shared'
+import { isSubstantialRequest, type TaskManager } from '@studio/task-manager'
 
 export interface ChatServiceDeps {
   runtime: CodingAgentRuntime
   projects: ProjectRepository
   sessions: SessionRepository
   activity: ActivityRepository
+  tasks: TaskManager
   /** Push a resolved event to the renderer. */
   onEvent: (event: ChatPushEvent) => void
   now?: () => Date
@@ -90,6 +92,13 @@ export class ChatService {
         })
         return
       }
+      case 'todos-updated': {
+        const projectId = this.projectForSession(event.sessionId)
+        if (!projectId) return
+        this.deps.tasks.syncOpenCodeTodos(projectId, event.todos)
+        this.deps.onEvent({ type: 'tasks-changed', projectId })
+        return
+      }
       case 'runtime-error': {
         this.deps.onEvent({ type: 'runtime-error', error: event.error })
         return
@@ -140,6 +149,16 @@ export class ChatService {
   async send(project: ProjectWorkspace, text: string): Promise<void> {
     const sessionId = await this.ensureSession(project)
     await this.deps.runtime.sendMessage(sessionId, text)
+
+    // Substantial requests create a Goal draft + initial task container
+    // before broad implementation begins (spec §12.4).
+    if (isSubstantialRequest(text)) {
+      const intake = this.deps.tasks.intakeSubstantialRequest(project.id, text)
+      if (intake.created) {
+        this.deps.onEvent({ type: 'tasks-changed', projectId: project.id })
+      }
+    }
+
     this.deps.activity.record('chat.send', 'User message sent', {
       projectId: project.id,
       payload: { sessionId, length: text.length },

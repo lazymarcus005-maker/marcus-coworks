@@ -1,2 +1,8 @@
-// @studio/task-manager — fleshed out by its implementing ticket.
-export const packageName = '@studio/task-manager'
+export type { TaskManagerDeps } from './task-manager.js'
+export {
+  canTransition,
+  isSubstantialRequest,
+  openCodeTaskId,
+  TaskManager,
+  TaskManagerError,
+} from './task-manager.js'

@@ -49,6 +49,7 @@ type OpenCodeEvent = {
     part?: OpenCodeTextPart
     sessionID?: string
     messageID?: string
+    todos?: { id: string; content: string; status: string; priority: string }[]
   }
 }
 
@@ -309,6 +310,20 @@ export class OpenCodeRuntime implements CodingAgentRuntime {
         }
         return
       }
+      case 'todo.updated': {
+        if (!props.sessionID || !props.todos) return
+        this.emit({
+          type: 'todos-updated',
+          sessionId: props.sessionID,
+          todos: props.todos.map((todo) => ({
+            id: todo.id,
+            content: todo.content,
+            status: normalizeTodoStatus(todo.status),
+            priority: normalizeTodoPriority(todo.priority),
+          })),
+        })
+        return
+      }
       default:
         return
     }
@@ -397,4 +412,16 @@ export class OpenCodeRuntime implements CodingAgentRuntime {
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+function normalizeTodoStatus(
+  status: string,
+): 'pending' | 'in_progress' | 'completed' | 'cancelled' {
+  if (status === 'in_progress' || status === 'completed' || status === 'cancelled') return status
+  return 'pending'
+}
+
+function normalizeTodoPriority(priority: string): 'high' | 'medium' | 'low' {
+  if (priority === 'high' || priority === 'medium' || priority === 'low') return priority
+  return 'medium'
 }
