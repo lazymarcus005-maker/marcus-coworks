@@ -3,6 +3,7 @@ import type { HealthInfo } from '../domain/app.js'
 import type { AttemptRecord } from '../domain/attempt.js'
 import type { ChatMessage, ChatPushEvent } from '../domain/chat.js'
 import type { ContextUsage } from '../domain/context.js'
+import type { JevConnectionStatus, JevSettings } from '../domain/decision.js'
 import type { FileEntry, TerminalInfo } from '../domain/fs.js'
 import type { InboxDecision, InboxItem, InboxItemStatus } from '../domain/inbox.js'
 import type { AcquireResult, ScopeLock } from '../domain/lock.js'
@@ -199,6 +200,20 @@ export interface IpcContract {
   'attempts/history': {
     request: { taskId: string }
     response: { attempts: AttemptRecord[] }
+  }
+  'decision/jev-settings': {
+    request: undefined
+    response: JevSettings
+  }
+  'decision/save-jev': {
+    request: { patch: Partial<JevSettings> }
+    response: JevSettings
+  }
+  'decision/set-jev-key': { request: { key: string }; response: JevSettings }
+  'decision/test-jev': { request: undefined; response: JevConnectionStatus }
+  'decision/model-route': {
+    request: { text: string }
+    response: { tier: 'fast' | 'quality'; confidence: number; provider: string }
   }
   'modes/get': { request: { projectId: string }; response: ProjectModeSettings }
   'modes/set-autonomy': {
@@ -441,6 +456,15 @@ export interface StudioApi {
       implementerSessionId?: string,
     ): Promise<{ decision: import('../domain/verifier.js').VerifierDecision }>
   }
+  decision: {
+    jevSettings(): Promise<JevSettings>
+    saveJev(patch: Partial<JevSettings>): Promise<JevSettings>
+    setJevKey(key: string): Promise<JevSettings>
+    testJev(): Promise<JevConnectionStatus>
+    modelRoute(
+      text: string,
+    ): Promise<{ tier: 'fast' | 'quality'; confidence: number; provider: string }>
+  }
   modes: {
     get(projectId: string): Promise<ProjectModeSettings>
     setAutonomy(projectId: string, level: 'L0' | 'L1' | 'L2' | 'L3'): Promise<ProjectModeSettings>
@@ -580,6 +604,11 @@ export function ipcChannels(): IpcChannel[] {
     'verification/run',
     'verification/history',
     'verifier/review',
+    'decision/jev-settings',
+    'decision/save-jev',
+    'decision/set-jev-key',
+    'decision/test-jev',
+    'decision/model-route',
     'modes/get',
     'modes/set-autonomy',
     'modes/set-model-mode',

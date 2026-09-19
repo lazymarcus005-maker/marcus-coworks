@@ -1001,3 +1001,12 @@ body {
   padding: 2px 6px;
   outline: none;
 }
+
+.jev-toggle {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px !important;
+  color: var(--text) !important;
+}

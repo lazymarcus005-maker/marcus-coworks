@@ -307,6 +307,20 @@ export function registerIpcHandlers(ipcMain: IpcMainLike, deps: MainDependencies
           : deps.services.verification.historyForProject(projectId),
       }
     },
+    'decision/jev-settings': () => deps.services.decision.jevSettings(),
+    'decision/save-jev': (_event, request) => {
+      const { patch } = request as IpcContract['decision/save-jev']['request']
+      return deps.services.decision.saveJevSettings(patch)
+    },
+    'decision/set-jev-key': async (_event, request) => {
+      const { key } = request as IpcContract['decision/set-jev-key']['request']
+      return deps.services.decision.setJevApiKey(key)
+    },
+    'decision/test-jev': () => deps.services.decision.testJevConnection(),
+    'decision/model-route': (_event, request) => {
+      const { text } = request as IpcContract['decision/model-route']['request']
+      return deps.services.decision.suggestModelRoute({ text })
+    },
     'modes/get': (_event, request) => {
       const { projectId } = request as IpcContract['modes/get']['request']
       return deps.services.modes.forProject(projectId)

@@ -30,6 +30,7 @@ import { AgentManager } from './agents.js'
 import { AttemptManager, DEFAULT_MAX_ATTEMPTS } from './attempts.js'
 import { ChatService } from './chat.js'
 import { ContextManager } from './context.js'
+import { DecisionManager } from './decision.js'
 import { listDirectory } from './explorer.js'
 import { InboxManager } from './inbox.js'
 import { McpManager } from './mcp.js'
@@ -64,6 +65,7 @@ export interface StudioServices {
   context: ContextManager
   scheduler: SchedulerService
   modes: ModeManager
+  decision: DecisionManager
   policy: typeof loadPolicy
   runtime: OpenCodeRuntime
   terminals: TerminalService
@@ -139,6 +141,12 @@ function buildServices(
   })
 
   const runtime = new OpenCodeRuntime()
+  const decision = new DecisionManager({
+    settings: new SettingsRepository(db),
+    secrets,
+    activity,
+  })
+
   const modes = new ModeManager({ settings: new SettingsRepository(db), activity })
 
   const scheduler = new SchedulerService({ settings: new SettingsRepository(db), activity })
@@ -237,6 +245,7 @@ function buildServices(
     context,
     scheduler,
     modes,
+    decision,
     policy: loadPolicy,
     runtime,
     terminals,

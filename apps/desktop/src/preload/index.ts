@@ -110,6 +110,13 @@ const api: StudioApi = {
     review: (projectId, taskId, worktreeId, implementerSessionId) =>
       invoke('verifier/review', { projectId, taskId, worktreeId, implementerSessionId }),
   },
+  decision: {
+    jevSettings: () => invoke('decision/jev-settings', undefined),
+    saveJev: (patch) => invoke('decision/save-jev', { patch }),
+    setJevKey: (key) => invoke('decision/set-jev-key', { key }),
+    testJev: () => invoke('decision/test-jev', undefined),
+    modelRoute: (text) => invoke('decision/model-route', { text }),
+  },
   modes: {
     get: (projectId) => invoke('modes/get', { projectId }),
     setAutonomy: (projectId, level) => invoke('modes/set-autonomy', { projectId, level }),
