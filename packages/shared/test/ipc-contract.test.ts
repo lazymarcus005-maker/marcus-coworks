@@ -34,6 +34,8 @@ const COVERAGE: Record<IpcChannel, true> = {
   'tasks/add': true,
   'tasks/update': true,
   'tasks/cancel': true,
+  'tasks/transition': true,
+  'tasks/history': true,
   'fs/list': true,
   'terminal/create': true,
   'terminal/write': true,

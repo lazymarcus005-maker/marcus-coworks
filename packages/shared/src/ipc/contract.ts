@@ -8,7 +8,7 @@ import type {
   RemoveProjectOptions,
 } from '../domain/project.js'
 import type { ConnectionTestResult, LlmProvider } from '../domain/provider.js'
-import type { GoalContract, HarnessTask, TaskStatus } from '../domain/task.js'
+import type { GoalContract, HarnessTask, TaskStatus, TaskTransition } from '../domain/task.js'
 
 /**
  * The single source of truth for the renderer <-> main IPC surface.
@@ -107,6 +107,14 @@ export interface IpcContract {
     response: { task: HarnessTask }
   }
   'tasks/cancel': { request: { taskId: string }; response: { task: HarnessTask } }
+  'tasks/transition': {
+    request: { taskId: string; to: TaskStatus; reason?: string }
+    response: { task: HarnessTask }
+  }
+  'tasks/history': {
+    request: { taskId: string }
+    response: { transitions: TaskTransition[] }
+  }
   'fs/list': { request: { projectId: string; path?: string }; response: { entries: FileEntry[] } }
   'terminal/create': {
     request: { projectId: string; cols?: number; rows?: number }
@@ -198,6 +206,8 @@ export interface StudioApi {
       fields: { title?: string; description?: string; status?: TaskStatus },
     ): Promise<{ task: HarnessTask }>
     cancel(taskId: string): Promise<{ task: HarnessTask }>
+    transition(taskId: string, to: TaskStatus, reason?: string): Promise<{ task: HarnessTask }>
+    history(taskId: string): Promise<{ transitions: TaskTransition[] }>
   }
   fs: {
     list(projectId: string, path?: string): Promise<{ entries: FileEntry[] }>
@@ -249,6 +259,8 @@ export function ipcChannels(): IpcChannel[] {
     'tasks/add',
     'tasks/update',
     'tasks/cancel',
+    'tasks/transition',
+    'tasks/history',
     'fs/list',
     'terminal/create',
     'terminal/write',

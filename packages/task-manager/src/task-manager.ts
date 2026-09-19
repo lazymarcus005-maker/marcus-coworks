@@ -1,4 +1,9 @@
-import type { ActivityRepository, GoalRepository, TaskRepository } from '@studio/persistence'
+import type {
+  ActivityRepository,
+  GoalRepository,
+  TaskRepository,
+  TaskTransitionRepository,
+} from '@studio/persistence'
 import type {
   GoalContract,
   GoalRisk,
@@ -6,6 +11,7 @@ import type {
   HarnessTask,
   RuntimeTodo,
   TaskStatus,
+  TaskTransition,
 } from '@studio/shared'
 
 export class TaskManagerError extends Error {
@@ -15,15 +21,40 @@ export class TaskManagerError extends Error {
 }
 
 /**
- * v1 transition table (spec §12.3 / §14). done and cancelled are terminal
- * until the full run state machine lands with its phase-2 ticket.
+ * Full task/run transition table (spec §14). The run backbone is
+ * created → planning → ready → running → testing → verifying with
+ * verifying branching to done (approved), rejected (retry loop), and
+ * human_required (escalation). failed is terminal; interrupted is
+ * recoverable. The pending/in_progress/blocked/waiting members cover
+ * the v1 quick statuses still produced by TODO sync and manual actions.
  */
 const ALLOWED_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
-  pending: ['in_progress', 'blocked', 'done', 'cancelled'],
-  in_progress: ['pending', 'blocked', 'done', 'cancelled'],
-  blocked: ['pending', 'in_progress', 'cancelled'],
+  created: ['planning', 'ready', 'cancelled'],
+  planning: ['ready', 'created', 'cancelled'],
+  ready: ['running', 'planning', 'cancelled'],
+  running: ['testing', 'waiting', 'failed', 'interrupted', 'cancelled'],
+  testing: ['verifying', 'running', 'failed', 'interrupted', 'cancelled'],
+  verifying: ['done', 'rejected', 'human_required', 'failed', 'interrupted', 'cancelled'],
+  rejected: ['retry', 'cancelled'],
+  retry: ['running', 'planning', 'cancelled'],
+  human_required: ['running', 'rejected', 'cancelled'],
   done: [],
+  failed: [],
   cancelled: [],
+  interrupted: ['running', 'planning', 'cancelled'],
+  pending: ['in_progress', 'planning', 'blocked', 'done', 'cancelled'],
+  in_progress: [
+    'pending',
+    'testing',
+    'verifying',
+    'blocked',
+    'done',
+    'failed',
+    'interrupted',
+    'cancelled',
+  ],
+  blocked: ['pending', 'in_progress', 'cancelled'],
+  waiting: ['running', 'cancelled'],
 }
 
 export function canTransition(from: TaskStatus, to: TaskStatus): boolean {
@@ -61,6 +92,7 @@ export interface TaskManagerDeps {
   tasks: TaskRepository
   goals: GoalRepository
   activity: ActivityRepository
+  transitions?: TaskTransitionRepository
   now?: () => Date
   newId?: () => string
 }
@@ -238,6 +270,7 @@ export class TaskManager {
   updateTask(
     taskId: string,
     fields: { title?: string; description?: string; status?: TaskStatus },
+    reason?: string,
   ): HarnessTask {
     const current = this.deps.tasks.get(taskId)
     if (!current) throw new TaskManagerError('Task not found')
@@ -252,6 +285,9 @@ export class TaskManager {
     }
 
     this.deps.tasks.update(taskId, fields, this.now().toISOString())
+    if (fields.status && fields.status !== current.status) {
+      this.recordTransition(current, fields.status, reason)
+    }
     const updated = this.deps.tasks.get(taskId)
     if (!updated) throw new TaskManagerError('Task disappeared during update')
 
@@ -291,6 +327,35 @@ export class TaskManager {
       throw new TaskManagerError(`Task cannot be cancelled from ${current.status}`)
     }
     return this.updateTask(taskId, { status: 'cancelled' })
+  }
+
+  /** Explicit machine transition with a reason, e.g. verifying → rejected. */
+  applyTransition(taskId: string, to: TaskStatus, reason?: string): HarnessTask {
+    const current = this.deps.tasks.get(taskId)
+    if (!current) throw new TaskManagerError('Task not found')
+    if (!canTransition(current.status, to)) {
+      throw new TaskManagerError(
+        `Invalid transition: ${current.status} → ${to}${reason ? ` (${reason})` : ''}`,
+      )
+    }
+    return this.updateTask(taskId, { status: to }, reason)
+  }
+
+  /** Auditable transition history for a task (spec §14). */
+  transitionHistory(taskId: string): TaskTransition[] {
+    return this.deps.transitions?.listForTask(taskId) ?? []
+  }
+
+  private recordTransition(from: HarnessTask, to: TaskStatus, reason?: string): void {
+    const transition: TaskTransition = {
+      id: this.newId(),
+      taskId: from.id,
+      from: from.status,
+      to,
+      reason,
+      at: this.now().toISOString(),
+    }
+    this.deps.transitions?.record(transition)
   }
 
   /**

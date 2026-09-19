@@ -164,6 +164,14 @@ export function registerIpcHandlers(ipcMain: IpcMainLike, deps: MainDependencies
       const { taskId } = request as IpcContract['tasks/cancel']['request']
       return { task: deps.services.tasks.cancelTask(taskId) }
     },
+    'tasks/transition': (_event, request) => {
+      const { taskId, to, reason } = request as IpcContract['tasks/transition']['request']
+      return { task: deps.services.tasks.applyTransition(taskId, to, reason) }
+    },
+    'tasks/history': (_event, request) => {
+      const { taskId } = request as IpcContract['tasks/history']['request']
+      return { transitions: deps.services.tasks.transitionHistory(taskId) }
+    },
     'fs/list': (_event, request) => {
       const { projectId, path } = request as IpcContract['fs/list']['request']
       const project = manager().getProject(projectId)

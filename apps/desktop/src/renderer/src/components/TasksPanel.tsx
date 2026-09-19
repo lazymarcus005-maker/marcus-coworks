@@ -2,11 +2,23 @@ import type { GoalContract, HarnessTask, TaskStatus } from '@studio/shared'
 import { createEffect, createSignal, For, onCleanup, Show } from 'solid-js'
 
 const STATUS_ICON: Record<TaskStatus, string> = {
+  created: '◦',
+  planning: '✎',
+  ready: '▷',
+  running: '▶',
+  testing: '⚙',
+  verifying: '⌕',
+  rejected: '↺',
+  retry: '↻',
+  human_required: '☝',
+  done: '✓',
+  failed: '✗',
+  cancelled: '×',
+  interrupted: '⏸',
   pending: '○',
   in_progress: '●',
   blocked: '⃠',
-  done: '✓',
-  cancelled: '×',
+  waiting: '…',
 }
 
 /** Click cycle for quick status changes; terminal states only via cancel. */

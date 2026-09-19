@@ -53,6 +53,8 @@ const api: StudioApi = {
     add: (projectId, title, description) => invoke('tasks/add', { projectId, title, description }),
     update: (taskId, fields) => invoke('tasks/update', { taskId, ...fields }),
     cancel: (taskId) => invoke('tasks/cancel', { taskId }),
+    transition: (taskId, to, reason) => invoke('tasks/transition', { taskId, to, reason }),
+    history: (taskId) => invoke('tasks/history', { taskId }),
   },
   fs: {
     list: (projectId, path) => invoke('fs/list', { projectId, path }),

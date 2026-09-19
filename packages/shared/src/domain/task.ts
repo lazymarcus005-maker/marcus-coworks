@@ -1,7 +1,39 @@
 /**
- * Task/TODO domain (spec §12) — durable execution state, v1 status set.
+ * Task/run status (spec §12.3 + §14). The run machine is
+ * CREATED → PLANNING → READY → RUNNING → TESTING → VERIFYING →
+ * (APPROVED) DONE | (REJECTED) RETRY | (ESCALATE) HUMAN_REQUIRED with
+ * CANCELLED, FAILED, INTERRUPTED as terminal/recoverable states. The
+ * pending/in_progress/blocked/waiting members are the v1 statuses still
+ * produced by the OpenCode TODO sync and quick manual actions.
  */
-export type TaskStatus = 'pending' | 'in_progress' | 'blocked' | 'done' | 'cancelled'
+export type TaskStatus =
+  | 'created'
+  | 'planning'
+  | 'ready'
+  | 'running'
+  | 'testing'
+  | 'verifying'
+  | 'rejected'
+  | 'retry'
+  | 'human_required'
+  | 'done'
+  | 'failed'
+  | 'cancelled'
+  | 'interrupted'
+  | 'pending'
+  | 'in_progress'
+  | 'blocked'
+  | 'waiting'
+
+/** One persisted, auditable task state transition (spec §14). */
+export type TaskTransition = {
+  id: string
+  taskId: string
+  from: TaskStatus
+  to: TaskStatus
+  reason?: string
+  at: string
+}
 
 export type HarnessTask = {
   id: string

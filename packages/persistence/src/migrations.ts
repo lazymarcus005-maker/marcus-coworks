@@ -122,9 +122,22 @@ ALTER TABLE tasks ADD COLUMN source TEXT NOT NULL DEFAULT 'user';
 ALTER TABLE tasks ADD COLUMN updated_at TEXT;
 `
 
+const MIGRATION_0003 = `
+CREATE TABLE task_transitions (
+  id TEXT PRIMARY KEY,
+  task_id TEXT NOT NULL,
+  from_status TEXT NOT NULL,
+  to_status TEXT NOT NULL,
+  reason TEXT,
+  at TEXT NOT NULL
+);
+CREATE INDEX idx_task_transitions_task ON task_transitions(task_id, at);
+`
+
 export const MIGRATIONS: Migration[] = [
   { id: 1, name: 'initial_schema', sql: MIGRATION_0001 },
   { id: 2, name: 'task_source_and_updated_at', sql: MIGRATION_0002 },
+  { id: 3, name: 'task_transitions', sql: MIGRATION_0003 },
 ]
 
 /** Applies pending migrations. Repeatable: already-applied ids are skipped. */

@@ -10,6 +10,7 @@ import {
   SqliteDb,
   TabRepository,
   TaskRepository,
+  TaskTransitionRepository,
 } from '@studio/persistence'
 import { ProjectManager } from '@studio/project-manager'
 import { KeychainSecretStore, type SecretStore } from '@studio/secrets'
@@ -60,6 +61,7 @@ function buildServices(
     tasks: new TaskRepository(db),
     goals: new GoalRepository(db),
     activity,
+    transitions: new TaskTransitionRepository(db),
   })
 
   const runtime = new OpenCodeRuntime()
