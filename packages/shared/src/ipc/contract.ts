@@ -8,7 +8,7 @@ import type {
   RemoveProjectOptions,
 } from '../domain/project.js'
 import type { ConnectionTestResult, LlmProvider } from '../domain/provider.js'
-import type { GoalSummary, HarnessTask, TaskStatus } from '../domain/task.js'
+import type { GoalContract, HarnessTask, TaskStatus } from '../domain/task.js'
 
 /**
  * The single source of truth for the renderer <-> main IPC surface.
@@ -75,15 +75,28 @@ export interface IpcContract {
   }
   'tasks/state': {
     request: { projectId: string }
-    response: { goal?: GoalSummary; tasks: HarnessTask[] }
+    response: { goal?: GoalContract; tasks: HarnessTask[] }
   }
   'tasks/create-goal': {
     request: { projectId: string; objective: string }
-    response: { goal: GoalSummary }
+    response: { goal: GoalContract }
   }
-  'tasks/update-goal': {
-    request: { goalId: string; objective: string }
-    response: { goal: GoalSummary }
+  'goals/update': {
+    request: {
+      goalId: string
+      patch: {
+        objective?: string
+        scope?: string[]
+        nonGoals?: string[]
+        constraints?: string[]
+        doneWhen?: string[]
+        risk?: string
+        maxAttempts?: number
+        autonomy?: string
+        status?: string
+      }
+    }
+    response: { goal: GoalContract }
   }
   'tasks/add': {
     request: { projectId: string; title: string; description?: string }
@@ -163,9 +176,22 @@ export interface StudioApi {
     onEvent(listener: (event: ChatPushEvent) => void): () => void
   }
   tasks: {
-    state(projectId: string): Promise<{ goal?: GoalSummary; tasks: HarnessTask[] }>
-    createGoal(projectId: string, objective: string): Promise<{ goal: GoalSummary }>
-    updateGoal(goalId: string, objective: string): Promise<{ goal: GoalSummary }>
+    state(projectId: string): Promise<{ goal?: GoalContract; tasks: HarnessTask[] }>
+    createGoal(projectId: string, objective: string): Promise<{ goal: GoalContract }>
+    updateGoal(
+      goalId: string,
+      patch: {
+        objective?: string
+        scope?: string[]
+        nonGoals?: string[]
+        constraints?: string[]
+        doneWhen?: string[]
+        risk?: string
+        maxAttempts?: number
+        autonomy?: string
+        status?: string
+      },
+    ): Promise<{ goal: GoalContract }>
     add(projectId: string, title: string, description?: string): Promise<{ task: HarnessTask }>
     update(
       taskId: string,
@@ -217,5 +243,17 @@ export function ipcChannels(): IpcChannel[] {
     'chat/send',
     'chat/stop',
     'chat/history',
+    'tasks/state',
+    'tasks/create-goal',
+    'goals/update',
+    'tasks/add',
+    'tasks/update',
+    'tasks/cancel',
+    'fs/list',
+    'terminal/create',
+    'terminal/write',
+    'terminal/resize',
+    'terminal/dispose',
+    'terminal/list',
   ]
 }

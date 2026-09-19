@@ -17,14 +17,28 @@ export type HarnessTask = {
 }
 
 /**
- * Goal summary for v1: objective + draft state. The full Goal Contract
- * (scope, done_when, risk, autonomy, …) arrives with its phase-2 ticket.
+ * Goal Contract (spec §13): objective, scope, non-goals, constraints,
+ * Definition of Done, risk, attempt cap, and allowed autonomy.
  */
-export type GoalSummary = {
+export type GoalRisk = 'low' | 'medium' | 'high'
+
+export type GoalStatus = 'draft' | 'ready' | 'active' | 'done' | 'cancelled'
+
+export type GoalContract = {
   id: string
   projectId: string
   objective: string
-  status: 'draft' | 'active' | 'done' | 'cancelled'
+  /** Path globs / areas the goal may touch, e.g. src/Auth/**. */
+  scope: string[]
+  nonGoals: string[]
+  constraints: string[]
+  /** Definition of Done: criteria that must all hold. */
+  doneWhen: string[]
+  risk: GoalRisk
+  maxAttempts: number
+  /** Autonomy level label; levels become mechanical in a later ticket. */
+  autonomy?: string
+  status: GoalStatus
   createdAt: string
   updatedAt: string
 }

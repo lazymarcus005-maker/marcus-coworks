@@ -125,9 +125,31 @@ export function registerIpcHandlers(ipcMain: IpcMainLike, deps: MainDependencies
       const { projectId, objective } = request as IpcContract['tasks/create-goal']['request']
       return { goal: deps.services.tasks.createGoalDraft(projectId, objective) }
     },
-    'tasks/update-goal': (_event, request) => {
-      const { goalId, objective } = request as IpcContract['tasks/update-goal']['request']
-      return { goal: deps.services.tasks.updateGoalObjective(goalId, objective) }
+    'goals/update': (_event, request) => {
+      const { goalId, patch } = request as IpcContract['goals/update']['request']
+      return {
+        goal: deps.services.tasks.updateGoalContract(goalId, {
+          objective: patch.objective,
+          scope: patch.scope,
+          nonGoals: patch.nonGoals,
+          constraints: patch.constraints,
+          doneWhen: patch.doneWhen,
+          risk:
+            patch.risk === 'low' || patch.risk === 'medium' || patch.risk === 'high'
+              ? patch.risk
+              : undefined,
+          maxAttempts: patch.maxAttempts,
+          autonomy: patch.autonomy,
+          status:
+            patch.status === 'draft' ||
+            patch.status === 'ready' ||
+            patch.status === 'active' ||
+            patch.status === 'done' ||
+            patch.status === 'cancelled'
+              ? patch.status
+              : undefined,
+        }),
+      }
     },
     'tasks/add': (_event, request) => {
       const { projectId, title, description } = request as IpcContract['tasks/add']['request']

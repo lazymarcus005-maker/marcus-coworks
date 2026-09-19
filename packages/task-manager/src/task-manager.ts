@@ -1,5 +1,12 @@
 import type { ActivityRepository, GoalRepository, TaskRepository } from '@studio/persistence'
-import type { GoalSummary, HarnessTask, RuntimeTodo, TaskStatus } from '@studio/shared'
+import type {
+  GoalContract,
+  GoalRisk,
+  GoalStatus,
+  HarnessTask,
+  RuntimeTodo,
+  TaskStatus,
+} from '@studio/shared'
 
 export class TaskManagerError extends Error {
   constructor(message: string) {
@@ -21,6 +28,23 @@ const ALLOWED_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
 
 export function canTransition(from: TaskStatus, to: TaskStatus): boolean {
   return (ALLOWED_TRANSITIONS[from] ?? []).includes(to)
+}
+
+/**
+ * Goal lifecycle (spec §13): draft → ready → active → done, with
+ * cancelled reachable from any non-terminal state. done/cancelled are
+ * terminal.
+ */
+const GOAL_TRANSITIONS: Record<GoalStatus, GoalStatus[]> = {
+  draft: ['ready', 'cancelled'],
+  ready: ['draft', 'active', 'cancelled'],
+  active: ['done', 'cancelled'],
+  done: [],
+  cancelled: [],
+}
+
+export function canTransitionGoal(from: GoalStatus, to: GoalStatus): boolean {
+  return (GOAL_TRANSITIONS[from] ?? []).includes(to)
 }
 
 /**
@@ -66,7 +90,7 @@ export class TaskManager {
     this.newId = deps.newId ?? (() => crypto.randomUUID())
   }
 
-  stateForProject(projectId: string): { goal?: GoalSummary; tasks: HarnessTask[] } {
+  stateForProject(projectId: string): { goal?: GoalContract; tasks: HarnessTask[] } {
     return {
       goal: this.deps.goals.openForProject(projectId),
       tasks: this.deps.tasks.listForProject(projectId),
@@ -74,7 +98,7 @@ export class TaskManager {
   }
 
   /** Creates the project's open goal draft, or returns the existing one. */
-  createGoalDraft(projectId: string, objective: string): GoalSummary {
+  createGoalDraft(projectId: string, objective: string): GoalContract {
     const trimmed = objective.trim()
     if (trimmed === '') throw new TaskManagerError('Goal objective cannot be empty')
 
@@ -82,10 +106,16 @@ export class TaskManager {
     if (existing) return existing
 
     const at = this.now().toISOString()
-    const goal: GoalSummary = {
+    const goal: GoalContract = {
       id: this.newId(),
       projectId,
       objective: trimmed,
+      scope: [],
+      nonGoals: [],
+      constraints: [],
+      doneWhen: [],
+      risk: 'medium',
+      maxAttempts: 3,
       status: 'draft',
       createdAt: at,
       updatedAt: at,
@@ -98,13 +128,85 @@ export class TaskManager {
     return goal
   }
 
-  updateGoalObjective(goalId: string, objective: string): GoalSummary {
+  updateGoalObjective(goalId: string, objective: string): GoalContract {
     const goal = this.deps.goals.get(goalId)
     if (!goal) throw new TaskManagerError('Goal not found')
     const trimmed = objective.trim()
     if (trimmed === '') throw new TaskManagerError('Goal objective cannot be empty')
     this.deps.goals.updateObjective(goalId, trimmed, this.now().toISOString())
     return { ...goal, objective: trimmed }
+  }
+
+  /**
+   * Updates the full Goal Contract. Contract fields are freely editable
+   * while the goal is a draft; once ready/active only the objective and
+   * autonomy may change (scope/DoD changes mid-run need a new goal).
+   */
+  updateGoalContract(
+    goalId: string,
+    patch: {
+      objective?: string
+      scope?: string[]
+      nonGoals?: string[]
+      constraints?: string[]
+      doneWhen?: string[]
+      risk?: GoalRisk
+      maxAttempts?: number
+      autonomy?: string
+      status?: GoalStatus
+    },
+  ): GoalContract {
+    const goal = this.deps.goals.get(goalId)
+    if (!goal) throw new TaskManagerError('Goal not found')
+
+    if (patch.objective !== undefined && patch.objective.trim() === '') {
+      throw new TaskManagerError('Goal objective cannot be empty')
+    }
+    if (patch.maxAttempts !== undefined) {
+      if (!Number.isInteger(patch.maxAttempts) || patch.maxAttempts < 1 || patch.maxAttempts > 10) {
+        throw new TaskManagerError('maxAttempts must be an integer between 1 and 10')
+      }
+    }
+    if (patch.status !== undefined && patch.status !== goal.status) {
+      if (!canTransitionGoal(goal.status, patch.status)) {
+        throw new TaskManagerError(`Invalid goal transition: ${goal.status} → ${patch.status}`)
+      }
+    }
+
+    const locked = goal.status === 'ready' || goal.status === 'active'
+    const structural: (keyof typeof patch)[] = [
+      'scope',
+      'nonGoals',
+      'constraints',
+      'doneWhen',
+      'risk',
+      'maxAttempts',
+    ]
+    if (locked) {
+      for (const field of structural) {
+        if (patch[field] !== undefined) {
+          throw new TaskManagerError(
+            `Goal field ${String(field)} is locked while ${goal.status}; move the goal back to draft or start a new goal`,
+          )
+        }
+      }
+    }
+
+    const at = this.now().toISOString()
+    const editable = locked ? { objective: patch.objective, autonomy: patch.autonomy } : patch
+    this.deps.goals.update(goalId, editable, at)
+    if (patch.status !== undefined && patch.status !== goal.status) {
+      this.deps.goals.setStatus(goalId, patch.status, at)
+    }
+    if (patch.status !== undefined && patch.status !== goal.status) {
+      this.deps.activity.record('goal.status', `Goal ${patch.status}`, {
+        projectId: goal.projectId,
+        payload: { goalId, from: goal.status, to: patch.status },
+      })
+    }
+    const updated = this.deps.goals.get(goalId)
+    if (!updated) throw new TaskManagerError('Goal disappeared during update')
+    return updated
   }
 
   addTask(
@@ -162,6 +264,22 @@ export class TaskManager {
           payload: { taskId, from: current.status, to: fields.status },
         },
       )
+
+      // Completing a goal-linked task references the goal's Definition of
+      // Done (spec §13): record which criteria remain unverified.
+      if (fields.status === 'done' && updated.goalId) {
+        const goal = this.deps.goals.get(updated.goalId)
+        if (goal && goal.doneWhen.length > 0) {
+          this.deps.activity.record(
+            'goal.dod-reference',
+            'Task completed; DoD criteria unverified',
+            {
+              projectId: current.projectId,
+              payload: { goalId: goal.id, taskId, unverifiedCriteria: goal.doneWhen },
+            },
+          )
+        }
+      }
     }
     return updated
   }
@@ -183,7 +301,7 @@ export class TaskManager {
     projectId: string,
     text: string,
   ): {
-    goal: GoalSummary
+    goal: GoalContract
     task: HarnessTask
     created: boolean
   } {

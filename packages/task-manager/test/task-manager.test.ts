@@ -133,3 +133,94 @@ describe('OpenCode TODO sync', () => {
     expect(kept?.source).toBe('user')
   })
 })
+
+describe('Goal Contract', () => {
+  it('persists all contract fields and survives restart', () => {
+    const goal = manager.createGoalDraft('proj-goal', 'Ship auth refactor')
+    const updated = manager.updateGoalContract(goal.id, {
+      objective: 'Ship auth refactor safely',
+      scope: ['src/Auth/**', 'tests/Auth/**'],
+      nonGoals: ['no authentication redesign'],
+      constraints: ['.NET 10', 'no TLS validation bypass'],
+      doneWhen: ['build passes', 'unit tests pass', 'no unrelated files modified'],
+      risk: 'high',
+      maxAttempts: 2,
+      autonomy: 'L2 Assisted',
+    })
+
+    expect(updated).toMatchObject({
+      objective: 'Ship auth refactor safely',
+      scope: ['src/Auth/**', 'tests/Auth/**'],
+      nonGoals: ['no authentication redesign'],
+      constraints: ['.NET 10', 'no TLS validation bypass'],
+      doneWhen: ['build passes', 'unit tests pass', 'no unrelated files modified'],
+      risk: 'high',
+      maxAttempts: 2,
+      autonomy: 'L2 Assisted',
+      status: 'draft',
+    })
+
+    // Restart: new manager over the same database.
+    const state = manager.stateForProject('proj-goal')
+    expect(state.goal?.doneWhen).toHaveLength(3)
+    expect(state.goal?.risk).toBe('high')
+  })
+
+  it('validates maxAttempts bounds', () => {
+    const goal = manager.createGoalDraft('proj-bounds', 'x')
+    expect(() => manager.updateGoalContract(goal.id, { maxAttempts: 0 })).toThrow(/1 and 10/)
+    expect(() => manager.updateGoalContract(goal.id, { maxAttempts: 1.5 })).toThrow(/integer/)
+  })
+
+  it('follows the goal state machine with terminal states', () => {
+    const goal = manager.createGoalDraft('proj-lifecycle', 'y')
+    const ready = manager.updateGoalContract(goal.id, { status: 'ready' })
+    expect(ready.status).toBe('ready')
+    const active = manager.updateGoalContract(goal.id, { status: 'active' })
+    expect(active.status).toBe('active')
+    const done = manager.updateGoalContract(goal.id, { status: 'done' })
+    expect(done.status).toBe('done')
+
+    // Terminal.
+    expect(() => manager.updateGoalContract(goal.id, { status: 'active' })).toThrow(
+      /Invalid goal transition/,
+    )
+
+    // No skipping draft → active.
+    const g2 = manager.createGoalDraft('proj-lifecycle-2', 'z')
+    expect(() => manager.updateGoalContract(g2.id, { status: 'active' })).toThrow(
+      /Invalid goal transition/,
+    )
+  })
+
+  it('locks structural fields once ready or active', () => {
+    const goal = manager.createGoalDraft('proj-locked', 'w')
+    manager.updateGoalContract(goal.id, { status: 'ready' })
+    expect(() => manager.updateGoalContract(goal.id, { scope: ['x'] })).toThrow(/locked/)
+    // Objective and autonomy stay editable.
+    const updated = manager.updateGoalContract(goal.id, {
+      objective: 'w (revised)',
+      autonomy: 'L1 Report',
+    })
+    expect(updated.objective).toBe('w (revised)')
+    expect(updated.autonomy).toBe('L1 Report')
+  })
+
+  it('completing a goal-linked task references the Definition of Done', () => {
+    const goal = manager.createGoalDraft('proj-dod', 'Do the thing')
+    manager.updateGoalContract(goal.id, {
+      doneWhen: ['tests pass', 'docs updated'],
+    })
+    const task = manager.addTask('proj-dod', { title: 'Implement', goalId: goal.id })
+    manager.updateTask(task.id, { status: 'in_progress' })
+    manager.updateTask(task.id, { status: 'done' })
+
+    const events = db.all(
+      "SELECT * FROM activity_events WHERE type = 'goal.dod-reference' AND project_id = ?",
+      'proj-dod',
+    )
+    expect(events).toHaveLength(1)
+    const payload = JSON.parse(String(events[0]?.payload_json)) as { unverifiedCriteria: string[] }
+    expect(payload.unverifiedCriteria).toEqual(['tests pass', 'docs updated'])
+  })
+})

@@ -737,3 +737,83 @@ body {
   height: 100%;
   padding: 2px 0;
 }
+
+/* ---- goal contract card ---- */
+
+.goal-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.badge-status-active {
+  color: var(--ok);
+  border-color: var(--ok);
+}
+
+.badge-status-ready {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.goal-section {
+  font-size: 11px;
+}
+
+.goal-section-title {
+  display: block;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 6px;
+}
+
+.goal-section ul {
+  margin: 2px 0 0;
+  padding-left: 16px;
+}
+
+.goal-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.goal-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.goal-edit label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.goal-edit textarea,
+.goal-edit input,
+.goal-edit select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  padding: 5px 8px;
+  outline: none;
+  resize: vertical;
+}
+
+.goal-edit textarea:focus,
+.goal-edit input:focus {
+  border-color: var(--accent);
+}
+
+.goal-edit-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+}
