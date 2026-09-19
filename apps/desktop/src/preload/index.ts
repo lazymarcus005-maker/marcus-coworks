@@ -110,6 +110,12 @@ const api: StudioApi = {
     review: (projectId, taskId, worktreeId, implementerSessionId) =>
       invoke('verifier/review', { projectId, taskId, worktreeId, implementerSessionId }),
   },
+  context: {
+    usage: (sessionId, model) => invoke('context/usage', { sessionId, model }),
+    compact: (sessionId) => invoke('context/compact', { sessionId }),
+    switchCheck: (sessionId, currentModel, targetModel) =>
+      invoke('context/switch-check', { sessionId, currentModel, targetModel }),
+  },
   agents: {
     list: (projectPath) => invoke('agents/list', { projectPath }),
     save: (profile, projectPath) => invoke('agents/save', { profile, projectPath }),

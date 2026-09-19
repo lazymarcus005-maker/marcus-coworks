@@ -36,6 +36,7 @@ class TreeRuntime implements CodingAgentRuntime {
   async listMessages() {
     return []
   }
+  async summarizeSession() {}
   async listChildren(sessionId: string) {
     return this.tree.get(sessionId) ?? []
   }

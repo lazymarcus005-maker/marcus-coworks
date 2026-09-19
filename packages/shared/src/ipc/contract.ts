@@ -2,6 +2,7 @@ import type { AgentProfile, AgentTreeNode } from '../domain/agent.js'
 import type { HealthInfo } from '../domain/app.js'
 import type { AttemptRecord } from '../domain/attempt.js'
 import type { ChatMessage, ChatPushEvent } from '../domain/chat.js'
+import type { ContextUsage } from '../domain/context.js'
 import type { FileEntry, TerminalInfo } from '../domain/fs.js'
 import type { InboxDecision, InboxItem, InboxItemStatus } from '../domain/inbox.js'
 import type { AcquireResult, ScopeLock } from '../domain/lock.js'
@@ -196,6 +197,15 @@ export interface IpcContract {
   'attempts/history': {
     request: { taskId: string }
     response: { attempts: AttemptRecord[] }
+  }
+  'context/usage': {
+    request: { sessionId: string; model: string }
+    response: ContextUsage
+  }
+  'context/compact': { request: { sessionId: string }; response: undefined }
+  'context/switch-check': {
+    request: { sessionId: string; currentModel: string; targetModel: string }
+    response: { compacted: boolean; contextWindow: number; model: string }
   }
   'agents/list': { request: { projectPath: string }; response: { profiles: AgentProfile[] } }
   'agents/save': {
@@ -411,6 +421,15 @@ export interface StudioApi {
       implementerSessionId?: string,
     ): Promise<{ decision: import('../domain/verifier.js').VerifierDecision }>
   }
+  context: {
+    usage(sessionId: string, model: string): Promise<ContextUsage>
+    compact(sessionId: string): Promise<void>
+    switchCheck(
+      sessionId: string,
+      currentModel: string,
+      targetModel: string,
+    ): Promise<{ compacted: boolean; contextWindow: number; model: string }>
+  }
   agents: {
     list(projectPath: string): Promise<{ profiles: AgentProfile[] }>
     save(profile: AgentProfile, projectPath: string): Promise<{ profile: AgentProfile }>
@@ -525,6 +544,9 @@ export function ipcChannels(): IpcChannel[] {
     'verification/run',
     'verification/history',
     'verifier/review',
+    'context/usage',
+    'context/compact',
+    'context/switch-check',
     'agents/list',
     'agents/save',
     'agents/remove',

@@ -79,6 +79,19 @@ export class FakeOpenCodeServer {
       return
     }
 
+    const summarizeMatch = url.pathname.match(/^\/session\/([^/]+)\/summarize$/)
+    if (req.method === 'POST' && summarizeMatch) {
+      const session = this.sessions.get(summarizeMatch[1] as string)
+      if (session)
+        session.messages.push({
+          id: `msg_sum_${++this.counter}`,
+          role: 'assistant',
+          text: 'summary',
+        })
+      res.end('{}')
+      return
+    }
+
     const abortMatch = url.pathname.match(/^\/session\/([^/]+)\/abort$/)
     if (req.method === 'POST' && abortMatch) {
       const session = this.sessions.get(abortMatch[1] as string)

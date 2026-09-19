@@ -943,3 +943,35 @@ body {
   flex-direction: column;
   overflow-y: auto;
 }
+
+.context-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.context-row {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 11px;
+}
+
+.context-value {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+.context-bar {
+  width: 100%;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--bg-elevated);
+  overflow: hidden;
+}
+
+.context-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.4s ease;
+}

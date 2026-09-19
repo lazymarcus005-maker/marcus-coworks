@@ -307,6 +307,29 @@ export function registerIpcHandlers(ipcMain: IpcMainLike, deps: MainDependencies
           : deps.services.verification.historyForProject(projectId),
       }
     },
+    'context/usage': async (_event, request) => {
+      const { sessionId, model } = request as IpcContract['context/usage']['request']
+      return deps.services.context.usageFor(sessionId, model)
+    },
+    'context/compact': async (_event, request) => {
+      const { sessionId } = request as IpcContract['context/compact']['request']
+      await deps.services.context.compact(sessionId)
+      return undefined
+    },
+    'context/switch-check': async (_event, request) => {
+      const { sessionId, currentModel, targetModel } =
+        request as IpcContract['context/switch-check']['request']
+      const result = await deps.services.context.assertModelSwitchSafe(
+        sessionId,
+        currentModel,
+        targetModel,
+      )
+      return {
+        compacted: result.compacted,
+        contextWindow: result.profile.contextWindow,
+        model: result.profile.model,
+      }
+    },
     'agents/list': (_event, request) => {
       const { projectPath } = request as IpcContract['agents/list']['request']
       return { profiles: deps.services.agents.list(projectPath) }

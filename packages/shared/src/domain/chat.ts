@@ -17,6 +17,8 @@ export type ChatMessage = {
   model?: string
   provider?: string
   error?: string
+  /** Token usage when reported by the runtime. */
+  tokens?: { input: number; output: number }
 }
 
 export type RuntimeDetection = {
@@ -75,6 +77,8 @@ export interface CodingAgentRuntime {
   listMessages(sessionId: string): Promise<ChatMessage[]>
   /** Child (subagent) session ids for a session (OpenCode native delegation). */
   listChildren(sessionId: string): Promise<string[]>
+  /** Native compaction: summarize the session (OpenCode owns compaction). */
+  summarizeSession(sessionId: string): Promise<void>
   subscribe(listener: (event: RuntimeEvent) => void): () => void
   dispose(): Promise<void>
 }

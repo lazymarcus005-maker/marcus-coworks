@@ -29,6 +29,7 @@ import { gitRunner, WorktreeManager } from '@studio/worktree-manager'
 import { AgentManager } from './agents.js'
 import { AttemptManager, DEFAULT_MAX_ATTEMPTS } from './attempts.js'
 import { ChatService } from './chat.js'
+import { ContextManager } from './context.js'
 import { listDirectory } from './explorer.js'
 import { InboxManager } from './inbox.js'
 import { McpManager } from './mcp.js'
@@ -58,6 +59,7 @@ export interface StudioServices {
   mcp: McpManager
   skills: SkillsManager
   agents: AgentManager
+  context: ContextManager
   policy: typeof loadPolicy
   runtime: OpenCodeRuntime
   terminals: TerminalService
@@ -131,6 +133,8 @@ function buildServices(
   })
 
   const runtime = new OpenCodeRuntime()
+  const context = new ContextManager({ runtime, activity })
+
   const agents = new AgentManager({ runtime, activity })
 
   const skills = new SkillsManager({
@@ -221,6 +225,7 @@ function buildServices(
     mcp,
     skills,
     agents,
+    context,
     policy: loadPolicy,
     runtime,
     terminals,

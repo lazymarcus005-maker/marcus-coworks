@@ -32,6 +32,7 @@ type OpenCodeMessage = {
   modelID?: string
   providerID?: string
   error?: { name: string; data?: { message?: string } }
+  tokens?: { input?: number; output?: number }
 }
 
 type OpenCodeTextPart = {
@@ -385,6 +386,14 @@ export class OpenCodeRuntime implements CodingAgentRuntime {
     return children.map((child) => String(child))
   }
 
+  async summarizeSession(sessionId: string): Promise<void> {
+    const base = await this.ensureServer()
+    const response = await this.fetchImpl(`${base}/session/${sessionId}/summarize`, {
+      method: 'POST',
+    })
+    if (!response.ok) throw new Error(`summarize failed: HTTP ${response.status}`)
+  }
+
   async listMessages(sessionId: string): Promise<ChatMessage[]> {
     const base = await this.ensureServer()
     const response = await this.fetchImpl(`${base}/session/${sessionId}/message`)
@@ -405,6 +414,10 @@ export class OpenCodeRuntime implements CodingAgentRuntime {
       model: entry.info.modelID,
       provider: entry.info.providerID,
       error: entry.info.error ? entry.info.error.name : undefined,
+      tokens:
+        entry.info.tokens !== undefined
+          ? { input: entry.info.tokens.input ?? 0, output: entry.info.tokens.output ?? 0 }
+          : undefined,
     }))
   }
 

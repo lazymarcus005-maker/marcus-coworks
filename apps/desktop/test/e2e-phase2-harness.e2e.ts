@@ -76,6 +76,7 @@ class ScriptedRuntime implements CodingAgentRuntime {
   async getStatus() {
     return 'idle' as const
   }
+  async summarizeSession() {}
   async listChildren() {
     return []
   }
