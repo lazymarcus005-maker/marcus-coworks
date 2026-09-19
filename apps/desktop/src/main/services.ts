@@ -26,6 +26,7 @@ import { KeychainSecretStore, type SecretStore } from '@studio/secrets'
 import type { ChatPushEvent } from '@studio/shared'
 import { TaskManager } from '@studio/task-manager'
 import { gitRunner, WorktreeManager } from '@studio/worktree-manager'
+import { AgentManager } from './agents.js'
 import { AttemptManager, DEFAULT_MAX_ATTEMPTS } from './attempts.js'
 import { ChatService } from './chat.js'
 import { listDirectory } from './explorer.js'
@@ -56,6 +57,7 @@ export interface StudioServices {
   pause: PauseManager
   mcp: McpManager
   skills: SkillsManager
+  agents: AgentManager
   policy: typeof loadPolicy
   runtime: OpenCodeRuntime
   terminals: TerminalService
@@ -129,6 +131,8 @@ function buildServices(
   })
 
   const runtime = new OpenCodeRuntime()
+  const agents = new AgentManager({ runtime, activity })
+
   const skills = new SkillsManager({
     globalSkillsDir: join(homeDir(), '.config', 'opencode', 'skills'),
   })
@@ -216,6 +220,7 @@ function buildServices(
     pause,
     mcp,
     skills,
+    agents,
     policy: loadPolicy,
     runtime,
     terminals,

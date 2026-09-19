@@ -376,6 +376,15 @@ export class OpenCodeRuntime implements CodingAgentRuntime {
     return sessionId in statuses ? 'busy' : 'idle'
   }
 
+  async listChildren(sessionId: string): Promise<string[]> {
+    const base = await this.ensureServer()
+    const response = await this.fetchImpl(`${base}/session/${sessionId}/children`)
+    if (!response.ok) return []
+    const children = (await response.json()) as unknown
+    if (!Array.isArray(children)) return []
+    return children.map((child) => String(child))
+  }
+
   async listMessages(sessionId: string): Promise<ChatMessage[]> {
     const base = await this.ensureServer()
     const response = await this.fetchImpl(`${base}/session/${sessionId}/message`)

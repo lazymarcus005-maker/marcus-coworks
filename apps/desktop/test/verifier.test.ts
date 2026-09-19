@@ -71,6 +71,9 @@ class FakeRuntime implements CodingAgentRuntime {
   async getStatus() {
     return 'idle' as const
   }
+  async listChildren() {
+    return []
+  }
   async listMessages(): Promise<ChatMessage[]> {
     return []
   }

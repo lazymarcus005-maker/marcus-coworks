@@ -307,6 +307,23 @@ export function registerIpcHandlers(ipcMain: IpcMainLike, deps: MainDependencies
           : deps.services.verification.historyForProject(projectId),
       }
     },
+    'agents/list': (_event, request) => {
+      const { projectPath } = request as IpcContract['agents/list']['request']
+      return { profiles: deps.services.agents.list(projectPath) }
+    },
+    'agents/save': (_event, request) => {
+      const { profile, projectPath } = request as IpcContract['agents/save']['request']
+      return { profile: deps.services.agents.save(profile, projectPath) }
+    },
+    'agents/remove': (_event, request) => {
+      const { name, projectPath } = request as IpcContract['agents/remove']['request']
+      deps.services.agents.remove(name, projectPath)
+      return undefined
+    },
+    'agents/tree': async (_event, request) => {
+      const { sessionId } = request as IpcContract['agents/tree']['request']
+      return { tree: await deps.services.agents.buildTree(sessionId) }
+    },
     'skills/list': (_event, request) => {
       const { projectPath } = request as IpcContract['skills/list']['request']
       return { skills: deps.services.skills.list(projectPath) }

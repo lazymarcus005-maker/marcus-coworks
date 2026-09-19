@@ -10,6 +10,7 @@ export type FakeSession = {
 
 export class FakeOpenCodeServer {
   readonly sessions = new Map<string, FakeSession>()
+  readonly children = new Map<string, string[]>()
   private readonly server: Server
   private readonly sseClients = new Set<{
     write: (chunk: string) => void
@@ -69,6 +70,12 @@ export class FakeOpenCodeServer {
         return
       }
       respondJson(res, { id: session.id })
+      return
+    }
+
+    const childrenMatch = url.pathname.match(/^\/session\/([^/]+)\/children$/)
+    if (req.method === 'GET' && childrenMatch) {
+      respondJson(res, this.children.get(childrenMatch[1] as string) ?? [])
       return
     }
 

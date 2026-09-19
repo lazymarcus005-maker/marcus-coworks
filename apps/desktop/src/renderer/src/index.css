@@ -912,3 +912,34 @@ body {
   outline: none;
   resize: vertical;
 }
+
+.agent-tree {
+  padding: 0 14px 12px;
+}
+
+.tree-body {
+  font-size: 11px;
+}
+
+.tree-node {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 0;
+  flex-wrap: wrap;
+}
+
+.tree-dot {
+  color: var(--accent);
+  font-size: 8px;
+}
+
+.tree-label {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  color: var(--text-muted);
+}
+
+.side-column {
+  flex-direction: column;
+  overflow-y: auto;
+}

@@ -73,6 +73,8 @@ export interface CodingAgentRuntime {
   stopSession(sessionId: string): Promise<void>
   getStatus(sessionId: string): Promise<AgentStatus>
   listMessages(sessionId: string): Promise<ChatMessage[]>
+  /** Child (subagent) session ids for a session (OpenCode native delegation). */
+  listChildren(sessionId: string): Promise<string[]>
   subscribe(listener: (event: RuntimeEvent) => void): () => void
   dispose(): Promise<void>
 }

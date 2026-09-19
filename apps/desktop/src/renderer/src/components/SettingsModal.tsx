@@ -18,6 +18,7 @@ const EMPTY_DRAFT: Draft = {
   apiKey: '',
 }
 
+import { AgentsPane } from './AgentsPane.js'
 import { McpPane } from './McpPane.js'
 import { SkillsPane } from './SkillsPane.js'
 
@@ -108,6 +109,10 @@ export function SettingsModal(props: {
           </button>
         </div>
         <div class="modal-body">
+          <section class="settings-section">
+            <h3>Agents</h3>
+            <AgentsPane projectPath={props.projectPath} />
+          </section>
           <section class="settings-section">
             <h3>Skills</h3>
             <SkillsPane projectPath={props.projectPath} />

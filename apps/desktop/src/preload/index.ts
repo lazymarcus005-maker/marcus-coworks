@@ -110,6 +110,12 @@ const api: StudioApi = {
     review: (projectId, taskId, worktreeId, implementerSessionId) =>
       invoke('verifier/review', { projectId, taskId, worktreeId, implementerSessionId }),
   },
+  agents: {
+    list: (projectPath) => invoke('agents/list', { projectPath }),
+    save: (profile, projectPath) => invoke('agents/save', { profile, projectPath }),
+    remove: (name, projectPath) => invoke('agents/remove', { name, projectPath }),
+    tree: (sessionId) => invoke('agents/tree', { sessionId }),
+  },
   skills: {
     list: (projectPath) => invoke('skills/list', { projectPath }),
     create: (input, projectPath) => invoke('skills/create', { input, projectPath }),

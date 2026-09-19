@@ -1,3 +1,4 @@
+import type { AgentProfile, AgentTreeNode } from '../domain/agent.js'
 import type { HealthInfo } from '../domain/app.js'
 import type { AttemptRecord } from '../domain/attempt.js'
 import type { ChatMessage, ChatPushEvent } from '../domain/chat.js'
@@ -195,6 +196,16 @@ export interface IpcContract {
   'attempts/history': {
     request: { taskId: string }
     response: { attempts: AttemptRecord[] }
+  }
+  'agents/list': { request: { projectPath: string }; response: { profiles: AgentProfile[] } }
+  'agents/save': {
+    request: { profile: AgentProfile; projectPath: string }
+    response: { profile: AgentProfile }
+  }
+  'agents/remove': { request: { name: string; projectPath: string }; response: undefined }
+  'agents/tree': {
+    request: { sessionId: string }
+    response: { tree: AgentTreeNode }
   }
   'skills/list': { request: { projectPath?: string }; response: { skills: SkillInfo[] } }
   'skills/create': {
@@ -400,6 +411,12 @@ export interface StudioApi {
       implementerSessionId?: string,
     ): Promise<{ decision: import('../domain/verifier.js').VerifierDecision }>
   }
+  agents: {
+    list(projectPath: string): Promise<{ profiles: AgentProfile[] }>
+    save(profile: AgentProfile, projectPath: string): Promise<{ profile: AgentProfile }>
+    remove(name: string, projectPath: string): Promise<void>
+    tree(sessionId: string): Promise<{ tree: AgentTreeNode }>
+  }
   skills: {
     list(projectPath?: string): Promise<{ skills: SkillInfo[] }>
     create(input: SkillCreateInput, projectPath?: string): Promise<{ skill: SkillInfo }>
@@ -508,6 +525,10 @@ export function ipcChannels(): IpcChannel[] {
     'verification/run',
     'verification/history',
     'verifier/review',
+    'agents/list',
+    'agents/save',
+    'agents/remove',
+    'agents/tree',
     'skills/list',
     'skills/create',
     'skills/read',
