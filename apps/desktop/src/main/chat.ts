@@ -8,7 +8,9 @@ import type {
   RuntimeEvent,
 } from '@studio/shared'
 import { isSubstantialRequest, type TaskManager } from '@studio/task-manager'
+import type { BudgetManager } from './budgets.js'
 import type { InboxManager } from './inbox.js'
+import type { ModeManager } from './modes.js'
 import type { PauseManager } from './pause.js'
 
 export interface ChatServiceDeps {
@@ -19,6 +21,8 @@ export interface ChatServiceDeps {
   tasks: TaskManager
   inbox: InboxManager
   pause: PauseManager
+  budgets?: BudgetManager
+  modes?: ModeManager
   /** Push a resolved event to the renderer. */
   onEvent: (event: ChatPushEvent) => void
   now?: () => Date
@@ -85,6 +89,19 @@ export class ChatService {
           messageId: event.messageId,
           error: event.error,
         })
+        // Budget accounting from runtime-reported usage.
+        if (projectId && event.tokens !== undefined && this.deps.budgets) {
+          const used = event.tokens.input + event.tokens.output
+          if (used > 0) {
+            const action = this.deps.budgets.recordUsage(projectId, used)
+            if (action === 'pause') {
+              this.deps.pause.setProject(projectId, true)
+              this.deps.activity.record('budgets.paused', 'Project auto-paused at token budget', {
+                projectId,
+              })
+            }
+          }
+        }
         return
       }
       case 'session-status': {
@@ -153,6 +170,13 @@ export class ChatService {
 
   async send(project: ProjectWorkspace, text: string): Promise<void> {
     this.deps.pause.assertCanAct(project.id, 'send a message')
+    // Model-call budget: downgrades autonomy to report-only at the cap.
+    if (
+      this.deps.budgets &&
+      this.deps.budgets.recordModelCall(project.id) === 'downgrade-to-report'
+    ) {
+      this.deps.modes?.setAutonomy(project.id, 'L1')
+    }
     const sessionId = await this.ensureSession(project)
 
     // Policy gate: the message is an agent instruction; block instructions

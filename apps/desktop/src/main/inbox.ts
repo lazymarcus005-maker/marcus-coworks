@@ -6,6 +6,8 @@ export interface InboxManagerDeps {
   activity: ActivityRepository
   /** Applies a machine transition when an approval resumes a task. */
   applyTaskTransition?: (taskId: string, to: 'running', reason: string) => void
+  /** Notifies the user of escalations (P4.8 notification policy). */
+  notify?: (title: string, body: string) => void
   now?: () => Date
   newId?: () => string
 }
@@ -51,6 +53,7 @@ export class InboxManager {
       projectId: input.projectId,
       payload: { itemId: item.id, kind: item.kind, taskId: input.taskId },
     })
+    this.deps.notify?.(`Agent Studio: ${input.kind}`, input.title)
     return item
   }
 

@@ -295,6 +295,10 @@ export class OpenCodeRuntime implements CodingAgentRuntime {
             error: info.error
               ? `${info.error.name}: ${info.error.data?.message ?? 'provider error'}`
               : undefined,
+            tokens:
+              info.tokens !== undefined
+                ? { input: info.tokens.input ?? 0, output: info.tokens.output ?? 0 }
+                : undefined,
           })
         }
         return

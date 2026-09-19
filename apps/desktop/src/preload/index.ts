@@ -110,6 +110,21 @@ const api: StudioApi = {
     review: (projectId, taskId, worktreeId, implementerSessionId) =>
       invoke('verifier/review', { projectId, taskId, worktreeId, implementerSessionId }),
   },
+  budgets: {
+    limits: () => invoke('budgets/limits', undefined),
+    setLimits: (patch) => invoke('budgets/set-limits', { patch }),
+    usage: () => invoke('budgets/usage', undefined),
+  },
+  doctor: {
+    run: (projectId) => invoke('doctor/run', { projectId }),
+  },
+  audit: {
+    export: (projectId) => invoke('audit/export', { projectId }),
+  },
+  notifications: {
+    enabled: () => invoke('notifications/enabled', undefined),
+    setEnabled: (enabled) => invoke('notifications/set-enabled', { enabled }),
+  },
   network: {
     list: (limit) => invoke('network/list', { limit }),
     policy: () => invoke('network/policy', undefined),

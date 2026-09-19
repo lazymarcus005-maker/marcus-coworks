@@ -1,6 +1,8 @@
 export * from './domain/agent.js'
 export * from './domain/app.js'
 export * from './domain/attempt.js'
+export * from './domain/budgets.js'
+export * from './domain/budgets.js'
 export * from './domain/chat.js'
 export * from './domain/context.js'
 export * from './domain/decision.js'
@@ -24,3 +26,10 @@ export * from './domain/verification.js'
 export * from './domain/verifier.js'
 export * from './domain/worktree.js'
 export * from './ipc/contract.js'
+
+/** Harness Doctor diagnostics (spec §48). */
+export type DoctorCheck = {
+  check: string
+  ok: boolean
+  detail: string
+}

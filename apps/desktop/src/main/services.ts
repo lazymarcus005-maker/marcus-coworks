@@ -26,8 +26,11 @@ import { KeychainSecretStore, type SecretStore } from '@studio/secrets'
 import type { ChatPushEvent } from '@studio/shared'
 import { TaskManager } from '@studio/task-manager'
 import { gitRunner, WorktreeManager } from '@studio/worktree-manager'
+import { Notification } from 'electron'
 import { AgentManager } from './agents.js'
 import { AttemptManager, DEFAULT_MAX_ATTEMPTS } from './attempts.js'
+import { AuditExporter, runDoctor } from './audit.js'
+import { BudgetManager } from './budgets.js'
 import { ChatService } from './chat.js'
 import { ContextManager } from './context.js'
 import { DecisionManager } from './decision.js'
@@ -36,6 +39,7 @@ import { InboxManager } from './inbox.js'
 import { McpManager } from './mcp.js'
 import { ModeManager } from './modes.js'
 import { NetworkEventRepository, NetworkPolicyManager } from './network.js'
+import { IdempotencyService, Notifier } from './ops.js'
 import { PauseManager } from './pause.js'
 import { ProviderService } from './providers.js'
 import { SchedulerService } from './scheduler.js'
@@ -69,6 +73,10 @@ export interface StudioServices {
   modes: ModeManager
   decision: DecisionManager
   network: NetworkPolicyManager
+  budgets: BudgetManager
+  idempotency: IdempotencyService
+  notifier: Notifier
+  exporter: AuditExporter
   policy: typeof loadPolicy
   runtime: OpenCodeRuntime
   terminals: TerminalService
@@ -135,6 +143,7 @@ function buildServices(
   const inbox = new InboxManager({
     inbox: new InboxRepository(db),
     activity,
+    notify: (title, body) => notifier.notify(title, body),
     applyTaskTransition: (taskId, to, reason) => {
       tasksManagerForInbox.applyTransition(taskId, to, reason)
     },
@@ -142,6 +151,48 @@ function buildServices(
 
   const runtime = new OpenCodeRuntime()
   const broker = new SecretBroker(secrets)
+  const budgets = new BudgetManager({ settings: new SettingsRepository(db), activity })
+  const idempotency = new IdempotencyService(db)
+  const notifier = new Notifier({
+    settings: new SettingsRepository(db),
+    activity,
+    notificationFactory: Notification,
+  })
+  const exporter = new AuditExporter({
+    services: () => ({
+      db,
+      projectManager,
+      secrets,
+      providers,
+      chat,
+      tasks,
+      worktrees,
+      locks,
+      inbox,
+      verification,
+      verifier,
+      attempts: attemptManager,
+      pause,
+      mcp,
+      skills,
+      agents,
+      context,
+      scheduler,
+      modes,
+      decision,
+      network,
+      budgets,
+      idempotency,
+      notifier,
+      exporter: undefined as never,
+      explorer: listDirectory,
+      policy: loadPolicy,
+      runtime,
+      terminals,
+    }),
+    broker,
+    db,
+  })
   const providers = new ProviderService({
     providers: new ProviderRepository(db),
     secrets,
@@ -234,6 +285,8 @@ function buildServices(
     tasks,
     inbox,
     pause,
+    budgets,
+    modes,
     onEvent: onChatEvent,
   })
 
@@ -261,6 +314,10 @@ function buildServices(
     modes,
     decision,
     network,
+    budgets,
+    idempotency,
+    notifier,
+    exporter,
     policy: loadPolicy,
     runtime,
     terminals,

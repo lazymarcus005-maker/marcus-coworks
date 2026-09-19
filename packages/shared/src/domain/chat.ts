@@ -38,7 +38,13 @@ export type RuntimeEvent =
       provider?: string
     }
   | { type: 'message-text'; sessionId: string; messageId: string; text: string }
-  | { type: 'message-completed'; sessionId: string; messageId: string; error?: string }
+  | {
+      type: 'message-completed'
+      sessionId: string
+      messageId: string
+      error?: string
+      tokens?: { input: number; output: number }
+    }
   | { type: 'session-status'; sessionId: string; status: AgentStatus }
   | { type: 'todos-updated'; sessionId: string; todos: RuntimeTodo[] }
   | { type: 'runtime-error'; error: string }

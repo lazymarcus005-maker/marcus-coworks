@@ -22,6 +22,7 @@ import { AgentsPane } from './AgentsPane.js'
 import { DecisionPane } from './DecisionPane.js'
 import { McpPane } from './McpPane.js'
 import { NetworkPane } from './NetworkPane.js'
+import { OpsPanes } from './OpsPanes.js'
 import { SkillsPane } from './SkillsPane.js'
 
 export function SettingsModal(props: {
@@ -111,6 +112,7 @@ export function SettingsModal(props: {
           </button>
         </div>
         <div class="modal-body">
+          <OpsPanes />
           <section class="settings-section">
             <h3>Network</h3>
             <NetworkPane />

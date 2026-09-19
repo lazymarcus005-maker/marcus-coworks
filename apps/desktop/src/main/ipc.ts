@@ -307,6 +307,27 @@ export function registerIpcHandlers(ipcMain: IpcMainLike, deps: MainDependencies
           : deps.services.verification.historyForProject(projectId),
       }
     },
+    'budgets/limits': () => deps.services.budgets.getLimits(),
+    'budgets/set-limits': (_event, request) => {
+      const { patch } = request as IpcContract['budgets/set-limits']['request']
+      return deps.services.budgets.setLimits(patch)
+    },
+    'budgets/usage': () => deps.services.budgets.snapshot().usage,
+    'doctor/run': async (_event, request) => {
+      const { projectId } = request as IpcContract['doctor/run']['request']
+      const { runDoctor } = await import('./audit.js')
+      return runDoctor(deps.services, projectId)
+    },
+    'audit/export': async (_event, request) => {
+      const { projectId } = request as IpcContract['audit/export']['request']
+      const path = await deps.services.exporter.exportToFile(projectId)
+      return { path }
+    },
+    'notifications/enabled': () => ({ enabled: deps.services.notifier.isEnabled() }),
+    'notifications/set-enabled': (_event, request) => {
+      const { enabled } = request as IpcContract['notifications/set-enabled']['request']
+      return { enabled: deps.services.notifier.setEnabled(enabled) }
+    },
     'network/list': (_event, request) => {
       const { limit } = request as IpcContract['network/list']['request']
       return { events: deps.services.network.listEvents(limit) }

@@ -1,6 +1,7 @@
 import type { AgentProfile, AgentTreeNode } from '../domain/agent.js'
 import type { HealthInfo } from '../domain/app.js'
 import type { AttemptRecord } from '../domain/attempt.js'
+import type { BudgetLimits, BudgetUsage } from '../domain/budgets.js'
 import type { ChatMessage, ChatPushEvent } from '../domain/chat.js'
 import type { ContextUsage } from '../domain/context.js'
 import type { JevConnectionStatus, JevSettings } from '../domain/decision.js'
@@ -201,6 +202,25 @@ export interface IpcContract {
   'attempts/history': {
     request: { taskId: string }
     response: { attempts: AttemptRecord[] }
+  }
+  'budgets/limits': { request: undefined; response: BudgetLimits }
+  'budgets/set-limits': {
+    request: { patch: Partial<BudgetLimits> }
+    response: BudgetLimits
+  }
+  'budgets/usage': { request: undefined; response: BudgetUsage }
+  'doctor/run': {
+    request: { projectId: string }
+    response: {
+      checks: { check: string; ok: boolean; detail: string }[]
+      autonomyRecommendation: string
+    }
+  }
+  'audit/export': { request: { projectId: string }; response: { path: string | null } }
+  'notifications/enabled': { request: undefined; response: { enabled: boolean } }
+  'notifications/set-enabled': {
+    request: { enabled: boolean }
+    response: { enabled: boolean }
   }
   'network/list': { request: { limit?: number }; response: { events: NetworkEvent[] } }
   'network/policy': { request: undefined; response: NetworkPolicySettings }
@@ -463,6 +483,22 @@ export interface StudioApi {
       implementerSessionId?: string,
     ): Promise<{ decision: import('../domain/verifier.js').VerifierDecision }>
   }
+  budgets: {
+    limits(): Promise<BudgetLimits>
+    setLimits(patch: Partial<BudgetLimits>): Promise<BudgetLimits>
+    usage(): Promise<BudgetUsage>
+  }
+  doctor: {
+    run(projectId: string): Promise<{
+      checks: { check: string; ok: boolean; detail: string }[]
+      autonomyRecommendation: string
+    }>
+  }
+  audit: { export(projectId: string): Promise<{ path: string | null }> }
+  notifications: {
+    enabled(): Promise<{ enabled: boolean }>
+    setEnabled(enabled: boolean): Promise<{ enabled: boolean }>
+  }
   network: {
     list(limit?: number): Promise<{ events: NetworkEvent[] }>
     policy(): Promise<NetworkPolicySettings>
@@ -616,6 +652,13 @@ export function ipcChannels(): IpcChannel[] {
     'verification/run',
     'verification/history',
     'verifier/review',
+    'budgets/limits',
+    'budgets/set-limits',
+    'budgets/usage',
+    'doctor/run',
+    'audit/export',
+    'notifications/enabled',
+    'notifications/set-enabled',
     'network/list',
     'network/policy',
     'network/set-policy',
