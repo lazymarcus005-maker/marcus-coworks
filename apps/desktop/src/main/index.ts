@@ -5,6 +5,7 @@ import { CHAT_EVENT_CHANNEL, TERMINAL_EVENT_CHANNEL } from '@studio/shared'
 import { app, BrowserWindow, dialog, ipcMain, type WebContents } from 'electron'
 import { registerIpcHandlers } from './ipc.js'
 import { createServices, type StudioServices } from './services.js'
+import { recoverOnStartup } from './startup-recovery.js'
 import { createStudioWindow } from './window.js'
 
 const mainDir = dirname(fileURLToPath(import.meta.url))
@@ -87,12 +88,11 @@ app.whenReady().then(() => {
 
   registerIpcHandlers(ipcMain, { health: healthInfo, pickFolder, services })
 
-  // Reconcile worktree manifests with reality after a restart.
-  for (const project of services.projectManager.listProjects()) {
-    services.worktrees.reconcile(project.path).catch((cause) => {
-      console.warn(`worktree reconcile failed for ${project.name}: ${String(cause)}`)
-    })
-  }
+  // Crash recovery: in-flight tasks → INTERRUPTED; stale worktrees and
+  // locks reconciled (spec §45).
+  recoverOnStartup(services).catch((cause) => {
+    console.warn(`startup recovery failed: ${String(cause)}`)
+  })
 
   const win = createStudioWindow(preloadPath())
   loadRenderer(win)
