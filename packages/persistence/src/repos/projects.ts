@@ -66,6 +66,15 @@ export class ProjectRepository {
     )
   }
 
+  setSession(id: string, sessionId: string, lastActiveAt: string): void {
+    this.db.run(
+      'UPDATE projects SET session_id = ?, last_active_at = ? WHERE id = ?',
+      sessionId,
+      lastActiveAt,
+      id,
+    )
+  }
+
   delete(id: string): void {
     this.db.run('DELETE FROM projects WHERE id = ?', id)
   }

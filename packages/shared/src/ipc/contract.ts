@@ -1,4 +1,5 @@
 import type { HealthInfo } from '../domain/app.js'
+import type { ChatMessage, ChatPushEvent } from '../domain/chat.js'
 import type {
   ActivityEvent,
   ProjectTab,
@@ -63,7 +64,17 @@ export interface IpcContract {
   }
   /** Tests a saved provider using its Keychain secret without exposing it. */
   'providers/test-saved': { request: { id: string }; response: ConnectionTestResult }
+  'chat/start': { request: { projectId: string }; response: { sessionId: string } }
+  'chat/send': { request: { projectId: string; text: string }; response: undefined }
+  'chat/stop': { request: { projectId: string }; response: undefined }
+  'chat/history': {
+    request: { projectId: string }
+    response: { messages: ChatMessage[] }
+  }
 }
+
+/** Main → renderer push channel for live chat events. */
+export const CHAT_EVENT_CHANNEL = 'studio:chat/event'
 
 export type IpcChannel = keyof IpcContract
 
@@ -105,6 +116,14 @@ export interface StudioApi {
     test(baseUrl: string, apiKey?: string): Promise<ConnectionTestResult>
     testSaved(id: string): Promise<ConnectionTestResult>
   }
+  chat: {
+    start(projectId: string): Promise<{ sessionId: string }>
+    send(projectId: string, text: string): Promise<void>
+    stop(projectId: string): Promise<void>
+    history(projectId: string): Promise<{ messages: ChatMessage[] }>
+    /** Subscribes to pushed chat events; returns an unsubscribe function. */
+    onEvent(listener: (event: ChatPushEvent) => void): () => void
+  }
 }
 
 export function ipcChannels(): IpcChannel[] {
@@ -125,5 +144,9 @@ export function ipcChannels(): IpcChannel[] {
     'providers/delete',
     'providers/test',
     'providers/test-saved',
+    'chat/start',
+    'chat/send',
+    'chat/stop',
+    'chat/history',
   ]
 }

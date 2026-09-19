@@ -1,7 +1,8 @@
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { HealthInfo } from '@studio/shared'
-import { app, BrowserWindow, dialog, ipcMain } from 'electron'
+import { CHAT_EVENT_CHANNEL } from '@studio/shared'
+import { app, BrowserWindow, dialog, ipcMain, type WebContents } from 'electron'
 import { registerIpcHandlers } from './ipc.js'
 import { createServices, type StudioServices } from './services.js'
 import { createStudioWindow } from './window.js'
@@ -9,6 +10,7 @@ import { createStudioWindow } from './window.js'
 const mainDir = dirname(fileURLToPath(import.meta.url))
 
 let services: StudioServices | undefined
+const chatEventTargets = new Set<WebContents>()
 
 function healthInfo(): HealthInfo {
   return {
@@ -47,12 +49,27 @@ async function pickFolder(): Promise<string | null> {
   return first === undefined ? null : first
 }
 
+function broadcastChatEvent(event: unknown): void {
+  for (const contents of chatEventTargets) {
+    if (!contents.isDestroyed()) {
+      contents.send(CHAT_EVENT_CHANNEL, event)
+    }
+  }
+}
+
+app.on('web-contents-created', (_event, contents) => {
+  if (contents.getType() === 'window') {
+    chatEventTargets.add(contents)
+    contents.on('destroyed', () => chatEventTargets.delete(contents))
+  }
+})
+
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
 })
 
 app.whenReady().then(() => {
-  services = createServices(app.getPath('userData'))
+  services = createServices(app.getPath('userData'), broadcastChatEvent)
 
   registerIpcHandlers(ipcMain, { health: healthInfo, pickFolder, services })
 
@@ -75,5 +92,6 @@ app.whenReady().then(() => {
 })
 
 app.on('will-quit', () => {
+  services?.runtime.dispose().catch(() => {})
   services?.db.close()
 })

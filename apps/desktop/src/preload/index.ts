@@ -1,4 +1,5 @@
 import type { IpcChannel, IpcContract, StudioApi } from '@studio/shared'
+import { CHAT_EVENT_CHANNEL } from '@studio/shared'
 import { contextBridge, ipcRenderer } from 'electron'
 
 async function invoke<C extends IpcChannel>(
@@ -32,6 +33,18 @@ const api: StudioApi = {
     remove: (id) => invoke('providers/delete', { id }),
     test: (baseUrl, apiKey) => invoke('providers/test', { baseUrl, apiKey }),
     testSaved: (id) => invoke('providers/test-saved', { id }),
+  },
+  chat: {
+    start: (projectId) => invoke('chat/start', { projectId }),
+    send: (projectId, text) => invoke('chat/send', { projectId, text }),
+    stop: (projectId) => invoke('chat/stop', { projectId }),
+    history: (projectId) => invoke('chat/history', { projectId }),
+    onEvent: (listener) => {
+      const handler = (_event: unknown, payload: Parameters<typeof listener>[0]) =>
+        listener(payload)
+      ipcRenderer.on(CHAT_EVENT_CHANNEL, handler)
+      return () => ipcRenderer.removeListener(CHAT_EVENT_CHANNEL, handler)
+    },
   },
 }
 

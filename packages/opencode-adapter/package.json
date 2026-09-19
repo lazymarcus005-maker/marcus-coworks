@@ -6,5 +6,8 @@
   "description": "OpenCode runtime adapter",
   "exports": {
     ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@studio/shared": "*"
   }
 }

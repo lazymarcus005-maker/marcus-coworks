@@ -14,7 +14,8 @@
     "@studio/persistence": "*",
     "@studio/project-manager": "*",
     "@studio/shared": "*",
-    "solid-js": "^1.9.9"
+    "solid-js": "^1.9.9",
+    "@studio/opencode-adapter": "*"
   },
   "devDependencies": {
     "electron": "^39.2.0",

@@ -93,6 +93,28 @@ export function registerIpcHandlers(ipcMain: IpcMainLike, deps: MainDependencies
       const { id } = request as IpcContract['providers/test-saved']['request']
       return deps.services.providers.testSaved(id)
     },
+    'chat/start': (_event, request) => {
+      const { projectId } = request as IpcContract['chat/start']['request']
+      const project = manager().getProject(projectId)
+      return deps.services.chat.ensureSession(project)
+    },
+    'chat/send': async (_event, request) => {
+      const { projectId, text } = request as IpcContract['chat/send']['request']
+      const project = manager().getProject(projectId)
+      await deps.services.chat.send(project, text)
+      return undefined
+    },
+    'chat/stop': async (_event, request) => {
+      const { projectId } = request as IpcContract['chat/stop']['request']
+      const project = manager().getProject(projectId)
+      await deps.services.chat.stop(project)
+      return undefined
+    },
+    'chat/history': (_event, request) => {
+      const { projectId } = request as IpcContract['chat/history']['request']
+      const project = manager().getProject(projectId)
+      return deps.services.chat.history(project)
+    },
   }
 
   for (const [channel, handler] of Object.entries(handlers)) {

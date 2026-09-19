@@ -1,6 +1,8 @@
 import type { ProjectWorkspace, RemoveProjectOptions } from '@studio/shared'
 import { createSignal, Show } from 'solid-js'
+import { createChatStore } from '../state/chat.js'
 import type { ProjectsStore } from '../state/projects.js'
+import { ChatPanel } from './ChatPanel.js'
 
 export function ProjectView(props: { project: ProjectWorkspace; store: ProjectsStore }) {
   const [editing, setEditing] = createSignal(false)
@@ -9,6 +11,7 @@ export function ProjectView(props: { project: ProjectWorkspace; store: ProjectsS
   const [removeHistory, setRemoveHistory] = createSignal(true)
 
   const project = () => props.project
+  const chat = createChatStore(() => props.project?.id, props.store)
 
   function startRename() {
     setDraftName(project().name)
@@ -87,9 +90,14 @@ export function ProjectView(props: { project: ProjectWorkspace; store: ProjectsS
         </Show>
       </div>
       <div class="project-body">
-        <div class="placeholder-panel">
-          <p>Chat, Tasks, Terminal, and Explorer panels arrive with their tickets.</p>
-          <p class="muted">Project registered and persisted. Status: {project().status}.</p>
+        <div class="chat-column">
+          <ChatPanel store={chat} projectId={() => props.project?.id} />
+        </div>
+        <div class="side-column">
+          <div class="placeholder-panel">
+            <p>Tasks, Terminal, and Explorer panels arrive with their tickets.</p>
+            <p class="muted">Session state persists per project.</p>
+          </div>
         </div>
       </div>
     </div>
