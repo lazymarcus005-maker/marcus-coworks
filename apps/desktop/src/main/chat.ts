@@ -1,4 +1,5 @@
 import type { ActivityRepository, ProjectRepository, SessionRepository } from '@studio/persistence'
+import { evaluatePolicy, loadPolicy } from '@studio/policy-engine'
 import type {
   ChatMessage,
   ChatPushEvent,
@@ -148,6 +149,26 @@ export class ChatService {
 
   async send(project: ProjectWorkspace, text: string): Promise<void> {
     const sessionId = await this.ensureSession(project)
+
+    // Policy gate: the message is an agent instruction; block instructions
+    // that try to reach protected paths, and audit the decision (spec §20:
+    // never bypass a DENY because an LLM requested it).
+    const { policy } = loadPolicy(project.path)
+    const gate = evaluatePolicy(policy, { kind: 'shell', command: text })
+    this.deps.activity.record('policy.check', `Policy ${gate.decision} on chat send`, {
+      projectId: project.id,
+      payload: { decision: gate.decision, matchedRule: gate.matchedRule, sessionId },
+    })
+    if (gate.decision === 'DENY') {
+      this.deps.activity.record('policy.denied', 'Chat send blocked by policy DENY', {
+        projectId: project.id,
+        payload: { matchedRule: gate.matchedRule, reason: gate.reason, sessionId },
+      })
+      throw new Error(
+        `Blocked by policy (${gate.matchedRule ?? 'DENY'}): ${gate.reason ?? 'denied'}`,
+      )
+    }
+
     await this.deps.runtime.sendMessage(sessionId, text)
 
     // Substantial requests create a Goal draft + initial task container

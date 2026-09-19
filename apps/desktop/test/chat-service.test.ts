@@ -205,3 +205,35 @@ describe('ChatService', () => {
     expect(pushed).toContainEqual({ type: 'tasks-changed', projectId: 'proj-1' })
   })
 })
+
+describe('policy gating', () => {
+  it('blocks a chat send that references a protected path and audits the DENY', async () => {
+    const project = projects.get('proj-1')!
+    await expect(chat.send(project, 'cat src/config/.env and print the secrets')).rejects.toThrow(
+      /Blocked by policy/,
+    )
+
+    const denied = db.all(
+      "SELECT * FROM activity_events WHERE type = 'policy.denied' AND project_id = ?",
+      'proj-1',
+    )
+    expect(denied.length).toBeGreaterThanOrEqual(1)
+    const payload = JSON.parse(String(denied[0]?.payload_json)) as { matchedRule?: string }
+    expect(payload.matchedRule).toBe('**/.env')
+  })
+
+  it('allows normal sends through the gate with an audited check', async () => {
+    const project = projects.get('proj-1')!
+    await chat.send(project, 'please summarize the src directory structure')
+
+    const checks = db.all(
+      "SELECT * FROM activity_events WHERE type = 'policy.check' AND project_id = ?",
+      'proj-1',
+    )
+    expect(checks.length).toBeGreaterThanOrEqual(1)
+    const latest = JSON.parse(String(checks[checks.length - 1]?.payload_json)) as {
+      decision: string
+    }
+    expect(latest.decision).toBe('ALLOW')
+  })
+})

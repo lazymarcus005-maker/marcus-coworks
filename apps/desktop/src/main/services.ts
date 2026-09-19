@@ -15,6 +15,7 @@ import {
   TaskTransitionRepository,
   WorktreeRepository,
 } from '@studio/persistence'
+import { loadPolicy } from '@studio/policy-engine'
 import { ProjectManager } from '@studio/project-manager'
 import { KeychainSecretStore, type SecretStore } from '@studio/secrets'
 import type { ChatPushEvent } from '@studio/shared'
@@ -36,6 +37,7 @@ export interface StudioServices {
   tasks: TaskManager
   worktrees: WorktreeManager
   locks: LockManager
+  policy: typeof loadPolicy
   runtime: OpenCodeRuntime
   terminals: TerminalService
   explorer: typeof listDirectory
@@ -102,6 +104,7 @@ function buildServices(
     tasks,
     worktrees,
     locks,
+    policy: loadPolicy,
     runtime,
     terminals,
     explorer: listDirectory,

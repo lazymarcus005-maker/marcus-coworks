@@ -1,0 +1,13 @@
+{
+  "name": "@studio/policy-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Machine-readable policy gate evaluation (ALLOW/ASK/DENY)",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@studio/shared": "*"
+  }
+}

@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@studio/persistence": "*",
-    "@studio/shared": "*"
+    "@studio/shared": "*",
+    "@studio/policy-engine": "*"
   }
 }
