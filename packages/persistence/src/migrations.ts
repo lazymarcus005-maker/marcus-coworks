@@ -186,6 +186,27 @@ CREATE TABLE inbox_items (
 CREATE INDEX idx_inbox_status ON inbox_items(status, created_at);
 `
 
+const MIGRATION_0007 = `
+CREATE TABLE verification_evidence (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  task_id TEXT,
+  worktree_id TEXT,
+  attempt INTEGER,
+  command TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  exit_code INTEGER NOT NULL,
+  passed INTEGER,
+  failed INTEGER,
+  duration_ms INTEGER NOT NULL,
+  summary TEXT,
+  output_path TEXT,
+  started_at TEXT NOT NULL,
+  finished_at TEXT NOT NULL
+);
+CREATE INDEX idx_evidence_task ON verification_evidence(task_id, started_at);
+`
+
 export const MIGRATIONS: Migration[] = [
   { id: 1, name: 'initial_schema', sql: MIGRATION_0001 },
   { id: 2, name: 'task_source_and_updated_at', sql: MIGRATION_0002 },
@@ -193,6 +214,7 @@ export const MIGRATIONS: Migration[] = [
   { id: 4, name: 'worktrees', sql: MIGRATION_0004 },
   { id: 5, name: 'locks', sql: MIGRATION_0005 },
   { id: 6, name: 'inbox_items', sql: MIGRATION_0006 },
+  { id: 7, name: 'evidence', sql: MIGRATION_0007 },
 ]
 
 /** Applies pending migrations. Repeatable: already-applied ids are skipped. */

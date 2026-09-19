@@ -52,6 +52,8 @@ const COVERAGE: Record<IpcChannel, true> = {
   'locks/release': true,
   'inbox/list': true,
   'inbox/resolve': true,
+  'verification/run': true,
+  'verification/history': true,
 }
 
 describe('ipc contract', () => {

@@ -289,6 +289,24 @@ export function registerIpcHandlers(ipcMain: IpcMainLike, deps: MainDependencies
       const { item } = await deps.services.inbox.resolve({ itemId, decision, note, resumeTask })
       return { item }
     },
+    'verification/run': async (_event, request) => {
+      const { projectId, commands, taskId, worktreeId, attempt } =
+        request as IpcContract['verification/run']['request']
+      const project = manager().getProject(projectId)
+      return deps.services.verification.runPipeline(project, commands, {
+        taskId,
+        worktreeId,
+        attempt,
+      })
+    },
+    'verification/history': (_event, request) => {
+      const { projectId, taskId } = request as IpcContract['verification/history']['request']
+      return {
+        evidence: taskId
+          ? deps.services.verification.historyForTask(taskId)
+          : deps.services.verification.historyForProject(projectId),
+      }
+    },
   }
 
   for (const [channel, handler] of Object.entries(handlers)) {

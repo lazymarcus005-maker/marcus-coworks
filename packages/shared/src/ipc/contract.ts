@@ -11,6 +11,11 @@ import type {
 } from '../domain/project.js'
 import type { ConnectionTestResult, LlmProvider } from '../domain/provider.js'
 import type { GoalContract, HarnessTask, TaskStatus, TaskTransition } from '../domain/task.js'
+import type {
+  VerificationCommand,
+  VerificationEvidence,
+  VerificationRun,
+} from '../domain/verification.js'
 import type { WorktreeDiff, WorktreeRecord, WorktreeStatus } from '../domain/worktree.js'
 
 /**
@@ -155,6 +160,20 @@ export interface IpcContract {
     request: { itemId: string; decision: InboxDecision; note?: string; resumeTask?: boolean }
     response: { item: InboxItem }
   }
+  'verification/run': {
+    request: {
+      projectId: string
+      commands: VerificationCommand[]
+      taskId?: string
+      worktreeId?: string
+      attempt?: number
+    }
+    response: VerificationRun
+  }
+  'verification/history': {
+    request: { taskId?: string; projectId: string }
+    response: { evidence: VerificationEvidence[] }
+  }
 }
 
 /** Main → renderer push channel for live chat events. */
@@ -282,6 +301,14 @@ export interface StudioApi {
       resumeTask?: boolean,
     ): Promise<{ item: InboxItem }>
   }
+  verification: {
+    run(
+      projectId: string,
+      commands: VerificationCommand[],
+      context?: { taskId?: string; worktreeId?: string; attempt?: number },
+    ): Promise<VerificationRun>
+    history(projectId: string, taskId?: string): Promise<{ evidence: VerificationEvidence[] }>
+  }
 }
 
 export function ipcChannels(): IpcChannel[] {
@@ -330,5 +357,7 @@ export function ipcChannels(): IpcChannel[] {
     'locks/release',
     'inbox/list',
     'inbox/resolve',
+    'verification/run',
+    'verification/history',
   ]
 }

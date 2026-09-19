@@ -95,6 +95,17 @@ const api: StudioApi = {
     resolve: (itemId, decision, note, resumeTask) =>
       invoke('inbox/resolve', { itemId, decision, note, resumeTask }),
   },
+  verification: {
+    run: (projectId, commands, context) =>
+      invoke('verification/run', {
+        projectId,
+        commands,
+        taskId: context?.taskId,
+        worktreeId: context?.worktreeId,
+        attempt: context?.attempt,
+      }),
+    history: (projectId, taskId) => invoke('verification/history', { projectId, taskId }),
+  },
 }
 
 contextBridge.exposeInMainWorld('studio', api)

@@ -93,6 +93,12 @@ export interface TaskManagerDeps {
   goals: GoalRepository
   activity: ActivityRepository
   transitions?: TaskTransitionRepository
+  /**
+   * Mechanical completion gate (spec §16): when present, a transition to
+   * done is rejected unless the gate allows it (e.g. required
+   * verification passed). Model claims cannot bypass it.
+   */
+  completionGate?: (taskId: string) => { allowed: boolean; reason?: string }
   now?: () => Date
   newId?: () => string
 }
@@ -278,6 +284,14 @@ export class TaskManager {
     if (fields.status && fields.status !== current.status) {
       if (!canTransition(current.status, fields.status)) {
         throw new TaskManagerError(`Invalid transition: ${current.status} → ${fields.status}`)
+      }
+      if (fields.status === 'done' && this.deps.completionGate) {
+        const gate = this.deps.completionGate(taskId)
+        if (!gate.allowed) {
+          throw new TaskManagerError(
+            `Completion blocked: ${gate.reason ?? 'required verification has not passed'}`,
+          )
+        }
       }
     }
     if (fields.title !== undefined && fields.title.trim() === '') {

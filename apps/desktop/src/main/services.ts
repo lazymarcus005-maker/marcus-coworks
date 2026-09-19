@@ -3,6 +3,7 @@ import { LockManager } from '@studio/lock-manager'
 import { OpenCodeRuntime } from '@studio/opencode-adapter'
 import {
   ActivityRepository,
+  EvidenceRepository,
   GoalRepository,
   InboxRepository,
   LockRepository,
@@ -27,6 +28,7 @@ import { listDirectory } from './explorer.js'
 import { InboxManager } from './inbox.js'
 import { ProviderService } from './providers.js'
 import { type TerminalPushEvent, TerminalService } from './terminal.js'
+import { VerificationManager } from './verification.js'
 
 export const KEYCHAIN_SERVICE = 'com.marcus-coworks.agent-studio'
 
@@ -40,6 +42,7 @@ export interface StudioServices {
   worktrees: WorktreeManager
   locks: LockManager
   inbox: InboxManager
+  verification: VerificationManager
   policy: typeof loadPolicy
   runtime: OpenCodeRuntime
   terminals: TerminalService
@@ -73,6 +76,16 @@ function buildServices(
     goals: new GoalRepository(db),
     activity,
     transitions: new TaskTransitionRepository(db),
+    completionGate: (taskId) => {
+      const latest = evidenceRepo.listForTask(taskId).at(-1)
+      return {
+        allowed: latest !== undefined && latest.exitCode === 0,
+        reason:
+          latest === undefined
+            ? 'no verification evidence recorded'
+            : `last check (${latest.kind}) exited ${latest.exitCode}`,
+      }
+    },
   })
 
   const worktrees = new WorktreeManager({
@@ -87,6 +100,13 @@ function buildServices(
   })
 
   const tasksManagerForInbox = tasks
+  const evidenceRepo = new EvidenceRepository(db)
+  const verification = new VerificationManager({
+    evidence: evidenceRepo,
+    activity,
+    outputDir: join(userDataDir, 'verification-logs'),
+  })
+
   const inbox = new InboxManager({
     inbox: new InboxRepository(db),
     activity,
@@ -118,6 +138,7 @@ function buildServices(
     worktrees,
     locks,
     inbox,
+    verification,
     policy: loadPolicy,
     runtime,
     terminals,
