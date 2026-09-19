@@ -226,6 +226,26 @@ CREATE TABLE attempts (
 CREATE INDEX idx_attempts_task ON attempts(task_id, attempt);
 `
 
+const MIGRATION_0009 = `
+CREATE TABLE network_events (
+  id TEXT PRIMARY KEY,
+  project_id TEXT,
+  destination TEXT NOT NULL,
+  method TEXT NOT NULL,
+  bytes INTEGER,
+  allowed INTEGER NOT NULL,
+  category TEXT NOT NULL DEFAULT 'unknown',
+  created_at TEXT NOT NULL
+);
+CREATE INDEX idx_network_time ON network_events(created_at);
+
+CREATE TABLE idempotency_keys (
+  key TEXT PRIMARY KEY,
+  result TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+`
+
 export const MIGRATIONS: Migration[] = [
   { id: 1, name: 'initial_schema', sql: MIGRATION_0001 },
   { id: 2, name: 'task_source_and_updated_at', sql: MIGRATION_0002 },
@@ -235,6 +255,7 @@ export const MIGRATIONS: Migration[] = [
   { id: 6, name: 'inbox_items', sql: MIGRATION_0006 },
   { id: 7, name: 'evidence', sql: MIGRATION_0007 },
   { id: 8, name: 'attempts', sql: MIGRATION_0008 },
+  { id: 9, name: 'network_events_and_idempotency', sql: MIGRATION_0009 },
 ]
 
 /** Applies pending migrations. Repeatable: already-applied ids are skipped. */

@@ -110,6 +110,11 @@ const api: StudioApi = {
     review: (projectId, taskId, worktreeId, implementerSessionId) =>
       invoke('verifier/review', { projectId, taskId, worktreeId, implementerSessionId }),
   },
+  network: {
+    list: (limit) => invoke('network/list', { limit }),
+    policy: () => invoke('network/policy', undefined),
+    setPolicy: (patch) => invoke('network/set-policy', { patch }),
+  },
   decision: {
     jevSettings: () => invoke('decision/jev-settings', undefined),
     saveJev: (patch) => invoke('decision/save-jev', { patch }),

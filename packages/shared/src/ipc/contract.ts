@@ -9,6 +9,7 @@ import type { InboxDecision, InboxItem, InboxItemStatus } from '../domain/inbox.
 import type { AcquireResult, ScopeLock } from '../domain/lock.js'
 import type { McpConnectionStatus, McpScope, McpServerConfig } from '../domain/mcp.js'
 import type { ProjectModeSettings } from '../domain/modes.js'
+import type { NetworkEvent, NetworkPolicySettings } from '../domain/network.js'
 import type { PauseState } from '../domain/pause.js'
 import type {
   ActivityEvent,
@@ -200,6 +201,12 @@ export interface IpcContract {
   'attempts/history': {
     request: { taskId: string }
     response: { attempts: AttemptRecord[] }
+  }
+  'network/list': { request: { limit?: number }; response: { events: NetworkEvent[] } }
+  'network/policy': { request: undefined; response: NetworkPolicySettings }
+  'network/set-policy': {
+    request: { patch: Partial<NetworkPolicySettings> }
+    response: NetworkPolicySettings
   }
   'decision/jev-settings': {
     request: undefined
@@ -456,6 +463,11 @@ export interface StudioApi {
       implementerSessionId?: string,
     ): Promise<{ decision: import('../domain/verifier.js').VerifierDecision }>
   }
+  network: {
+    list(limit?: number): Promise<{ events: NetworkEvent[] }>
+    policy(): Promise<NetworkPolicySettings>
+    setPolicy(patch: Partial<NetworkPolicySettings>): Promise<NetworkPolicySettings>
+  }
   decision: {
     jevSettings(): Promise<JevSettings>
     saveJev(patch: Partial<JevSettings>): Promise<JevSettings>
@@ -604,6 +616,9 @@ export function ipcChannels(): IpcChannel[] {
     'verification/run',
     'verification/history',
     'verifier/review',
+    'network/list',
+    'network/policy',
+    'network/set-policy',
     'decision/jev-settings',
     'decision/save-jev',
     'decision/set-jev-key',

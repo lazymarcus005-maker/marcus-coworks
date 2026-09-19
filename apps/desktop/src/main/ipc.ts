@@ -307,6 +307,15 @@ export function registerIpcHandlers(ipcMain: IpcMainLike, deps: MainDependencies
           : deps.services.verification.historyForProject(projectId),
       }
     },
+    'network/list': (_event, request) => {
+      const { limit } = request as IpcContract['network/list']['request']
+      return { events: deps.services.network.listEvents(limit) }
+    },
+    'network/policy': () => deps.services.network.getPolicy(),
+    'network/set-policy': (_event, request) => {
+      const { patch } = request as IpcContract['network/set-policy']['request']
+      return deps.services.network.setPolicy(patch)
+    },
     'decision/jev-settings': () => deps.services.decision.jevSettings(),
     'decision/save-jev': (_event, request) => {
       const { patch } = request as IpcContract['decision/save-jev']['request']

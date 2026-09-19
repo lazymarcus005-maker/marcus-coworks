@@ -21,6 +21,7 @@ const EMPTY_DRAFT: Draft = {
 import { AgentsPane } from './AgentsPane.js'
 import { DecisionPane } from './DecisionPane.js'
 import { McpPane } from './McpPane.js'
+import { NetworkPane } from './NetworkPane.js'
 import { SkillsPane } from './SkillsPane.js'
 
 export function SettingsModal(props: {
@@ -110,6 +111,10 @@ export function SettingsModal(props: {
           </button>
         </div>
         <div class="modal-body">
+          <section class="settings-section">
+            <h3>Network</h3>
+            <NetworkPane />
+          </section>
           <section class="settings-section">
             <h3>Decision Engine</h3>
             <DecisionPane />

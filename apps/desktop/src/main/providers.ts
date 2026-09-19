@@ -19,6 +19,8 @@ export type ProviderDraft = {
 export interface ProviderServiceDeps {
   providers: ProviderRepository
   secrets: SecretStore
+  /** Optional broker: issued values get audit-redacted. */
+  broker?: { resolve(id: string): Promise<string | null> }
   fetchImpl?: typeof fetch
   now?: () => Date
   newId?: () => string
@@ -130,6 +132,7 @@ export class ProviderService {
   /** Resolves the API key for a configured provider (main process only). */
   async apiKeyFor(provider: LlmProvider): Promise<string | null> {
     if (!provider.apiKeySecretId) return null
+    if (this.deps.broker) return this.deps.broker.resolve(provider.apiKeySecretId)
     return this.deps.secrets.get(provider.apiKeySecretId)
   }
 

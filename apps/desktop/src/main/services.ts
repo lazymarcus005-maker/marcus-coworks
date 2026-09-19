@@ -35,9 +35,11 @@ import { listDirectory } from './explorer.js'
 import { InboxManager } from './inbox.js'
 import { McpManager } from './mcp.js'
 import { ModeManager } from './modes.js'
+import { NetworkEventRepository, NetworkPolicyManager } from './network.js'
 import { PauseManager } from './pause.js'
 import { ProviderService } from './providers.js'
 import { SchedulerService } from './scheduler.js'
+import { SecretBroker } from './secret-broker.js'
 import { SkillsManager } from './skills.js'
 import { type TerminalPushEvent, TerminalService } from './terminal.js'
 import { VerificationManager } from './verification.js'
@@ -66,6 +68,7 @@ export interface StudioServices {
   scheduler: SchedulerService
   modes: ModeManager
   decision: DecisionManager
+  network: NetworkPolicyManager
   policy: typeof loadPolicy
   runtime: OpenCodeRuntime
   terminals: TerminalService
@@ -90,10 +93,7 @@ function buildServices(
     tabs: new TabRepository(db),
     activity,
   })
-  const providers = new ProviderService({
-    providers: new ProviderRepository(db),
-    secrets,
-  })
+
   const tasks = new TaskManager({
     tasks: new TaskRepository(db),
     goals: new GoalRepository(db),
@@ -141,10 +141,24 @@ function buildServices(
   })
 
   const runtime = new OpenCodeRuntime()
+  const broker = new SecretBroker(secrets)
+  const providers = new ProviderService({
+    providers: new ProviderRepository(db),
+    secrets,
+    broker,
+  })
+  const redactedActivity = broker.redactingActivity(activity)
+  const network = new NetworkPolicyManager({
+    db,
+    settings: new SettingsRepository(db),
+    activity: redactedActivity,
+    events: new NetworkEventRepository(db),
+  })
   const decision = new DecisionManager({
     settings: new SettingsRepository(db),
     secrets,
-    activity,
+    activity: redactedActivity,
+    fetchImpl: (url, init) => network.fetch(String(url), { method: String(init?.method ?? 'GET') }),
   })
 
   const modes = new ModeManager({ settings: new SettingsRepository(db), activity })
@@ -246,6 +260,7 @@ function buildServices(
     scheduler,
     modes,
     decision,
+    network,
     policy: loadPolicy,
     runtime,
     terminals,
