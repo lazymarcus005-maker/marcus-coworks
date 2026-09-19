@@ -22,7 +22,8 @@
     "@xterm/addon-fit": "^0.10.0",
     "@studio/worktree-manager": "*",
     "@studio/lock-manager": "*",
-    "@studio/policy-engine": "*"
+    "@studio/policy-engine": "*",
+    "@studio/failure-classifier": "*"
   },
   "devDependencies": {
     "electron": "^39.2.0",

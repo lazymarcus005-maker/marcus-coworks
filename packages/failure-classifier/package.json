@@ -1,0 +1,10 @@
+{
+  "name": "@studio/failure-classifier",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Rule-first failure classification and recovery routing",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

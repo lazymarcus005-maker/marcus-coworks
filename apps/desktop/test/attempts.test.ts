@@ -229,3 +229,35 @@ describe('AttemptManager', () => {
     expect(first.record.attempt).toBe(1)
   })
 })
+
+describe('failure classification integration', () => {
+  it('endAttempt derives the failure class from the signal and audits it', async () => {
+    const task = tasks.addTask('p-classify', { title: 'Classify me' })
+    db.run("UPDATE tasks SET status = 'ready' WHERE id = ?", task.id)
+    const started = await attempts.startAttempt({
+      projectId: 'p-classify',
+      projectPath: repo,
+      taskId: task.id,
+    })
+
+    attempts.endAttempt(started.record.id, {
+      outcome: 'failed',
+      failureSignal: {
+        source: 'verification',
+        exitCode: 1,
+        output: 'Tests: 2 failed, 40 passed',
+      },
+    })
+
+    const record = attempts.history(task.id)[0]
+    expect(record?.failureClass).toBe('TestRegression')
+
+    const events = db.all(
+      "SELECT * FROM activity_events WHERE type = 'failure.classified' AND project_id = ?",
+      'p-classify',
+    )
+    expect(events).toHaveLength(1)
+    const payload = JSON.parse(String(events[0]?.payload_json)) as { recovery: string }
+    expect(payload.recovery).toBe('repair-attempt')
+  })
+})

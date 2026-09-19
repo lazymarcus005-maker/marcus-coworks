@@ -1,5 +1,6 @@
+import { classifyFailure } from '@studio/failure-classifier'
 import type { ActivityRepository, AttemptRepository, GoalRepository } from '@studio/persistence'
-import type { AttemptOutcome, AttemptRecord } from '@studio/shared'
+import type { AttemptOutcome, AttemptRecord, FailureSignal } from '@studio/shared'
 import type { TaskManager } from '@studio/task-manager'
 import type { WorktreeManager } from '@studio/worktree-manager'
 import type { InboxManager } from './inbox.js'
@@ -127,13 +128,29 @@ export class AttemptManager {
       failureClass?: string
       summary?: string
       evidenceIds?: string[]
+      failureSignal?: FailureSignal
     },
   ): AttemptRecord {
     const record = this.deps.attempts.get(attemptId)
     if (!record) throw new Error(`Attempt not found: ${attemptId}`)
     if (record.endedAt) throw new Error(`Attempt already ended (${record.outcome ?? 'unknown'})`)
 
-    this.deps.attempts.end(attemptId, input, this.now().toISOString())
+    let failureClass = input.failureClass
+    if (failureClass === undefined && input.failureSignal) {
+      const assessment = classifyFailure(input.failureSignal)
+      failureClass = assessment.class
+      this.deps.activity.record('failure.classified', `Classified ${assessment.class}`, {
+        projectId: record.projectId,
+        payload: {
+          attemptId,
+          class: assessment.class,
+          recovery: assessment.recovery,
+          matchedRules: assessment.matchedRules,
+        },
+      })
+    }
+
+    this.deps.attempts.end(attemptId, { ...input, failureClass }, this.now().toISOString())
     this.deps.activity.record('attempt.ended', `Attempt ${record.attempt} ${input.outcome}`, {
       projectId: record.projectId,
       payload: {
