@@ -1,8 +1,10 @@
 import { join } from 'node:path'
+import { LockManager } from '@studio/lock-manager'
 import { OpenCodeRuntime } from '@studio/opencode-adapter'
 import {
   ActivityRepository,
   GoalRepository,
+  LockRepository,
   migrate,
   ProjectRepository,
   ProviderRepository,
@@ -33,6 +35,7 @@ export interface StudioServices {
   chat: ChatService
   tasks: TaskManager
   worktrees: WorktreeManager
+  locks: LockManager
   runtime: OpenCodeRuntime
   terminals: TerminalService
   explorer: typeof listDirectory
@@ -73,6 +76,11 @@ function buildServices(
     git: gitRunner(),
   })
 
+  const locks = new LockManager({
+    locks: new LockRepository(db),
+    activity,
+  })
+
   const runtime = new OpenCodeRuntime()
   const chat = new ChatService({
     runtime,
@@ -93,6 +101,7 @@ function buildServices(
     chat,
     tasks,
     worktrees,
+    locks,
     runtime,
     terminals,
     explorer: listDirectory,

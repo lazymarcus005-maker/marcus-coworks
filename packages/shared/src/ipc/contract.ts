@@ -1,6 +1,7 @@
 import type { HealthInfo } from '../domain/app.js'
 import type { ChatMessage, ChatPushEvent } from '../domain/chat.js'
 import type { FileEntry, TerminalInfo } from '../domain/fs.js'
+import type { AcquireResult, ScopeLock } from '../domain/lock.js'
 import type {
   ActivityEvent,
   ProjectTab,
@@ -139,6 +140,12 @@ export interface IpcContract {
   }
   'worktrees/diff': { request: { worktreeId: string }; response: { diff: WorktreeDiff } }
   'worktrees/discard': { request: { worktreeId: string; force?: boolean }; response: undefined }
+  'locks/list': { request: { projectId: string }; response: { locks: ScopeLock[] } }
+  'locks/acquire': {
+    request: { projectId: string; ownerTaskId: string; patterns: string[] }
+    response: { result: AcquireResult }
+  }
+  'locks/release': { request: { lockId: string }; response: undefined }
 }
 
 /** Main → renderer push channel for live chat events. */
@@ -248,6 +255,15 @@ export interface StudioApi {
     diff(worktreeId: string): Promise<{ diff: WorktreeDiff }>
     discard(worktreeId: string, force?: boolean): Promise<void>
   }
+  locks: {
+    list(projectId: string): Promise<{ locks: ScopeLock[] }>
+    acquire(
+      projectId: string,
+      ownerTaskId: string,
+      patterns: string[],
+    ): Promise<{ result: AcquireResult }>
+    release(lockId: string): Promise<void>
+  }
 }
 
 export function ipcChannels(): IpcChannel[] {
@@ -291,5 +307,8 @@ export function ipcChannels(): IpcChannel[] {
     'worktrees/status',
     'worktrees/diff',
     'worktrees/discard',
+    'locks/list',
+    'locks/acquire',
+    'locks/release',
   ]
 }

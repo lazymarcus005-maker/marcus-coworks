@@ -1,0 +1,14 @@
+{
+  "name": "@studio/lock-manager",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Path/resource scope locking to prevent overlapping agent mutations",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@studio/persistence": "*",
+    "@studio/shared": "*"
+  }
+}

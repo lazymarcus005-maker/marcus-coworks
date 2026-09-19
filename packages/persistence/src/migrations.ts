@@ -152,11 +152,28 @@ CREATE INDEX idx_worktrees_task ON worktrees(task_id, attempt);
 CREATE INDEX idx_worktrees_project ON worktrees(project_id);
 `
 
+const MIGRATION_0005 = `
+CREATE TABLE locks (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  owner_task_id TEXT NOT NULL,
+  owner_agent_id TEXT,
+  patterns_json TEXT NOT NULL,
+  status TEXT NOT NULL,
+  acquired_at TEXT NOT NULL,
+  expires_at TEXT,
+  wait_deadline TEXT,
+  escalated_at TEXT
+);
+CREATE INDEX idx_locks_project_status ON locks(project_id, status);
+`
+
 export const MIGRATIONS: Migration[] = [
   { id: 1, name: 'initial_schema', sql: MIGRATION_0001 },
   { id: 2, name: 'task_source_and_updated_at', sql: MIGRATION_0002 },
   { id: 3, name: 'task_transitions', sql: MIGRATION_0003 },
   { id: 4, name: 'worktrees', sql: MIGRATION_0004 },
+  { id: 5, name: 'locks', sql: MIGRATION_0005 },
 ]
 
 /** Applies pending migrations. Repeatable: already-applied ids are skipped. */

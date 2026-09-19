@@ -47,6 +47,9 @@ const COVERAGE: Record<IpcChannel, true> = {
   'worktrees/status': true,
   'worktrees/diff': true,
   'worktrees/discard': true,
+  'locks/list': true,
+  'locks/acquire': true,
+  'locks/release': true,
 }
 
 describe('ipc contract', () => {

@@ -247,6 +247,20 @@ export function registerIpcHandlers(ipcMain: IpcMainLike, deps: MainDependencies
       await deps.services.worktrees.discard(worktreeId, project.path, { force })
       return undefined
     },
+    'locks/list': (_event, request) => {
+      const { projectId } = request as IpcContract['locks/list']['request']
+      return { locks: deps.services.locks.listForProject(projectId) }
+    },
+    'locks/acquire': (_event, request) => {
+      const { projectId, ownerTaskId, patterns } =
+        request as IpcContract['locks/acquire']['request']
+      return { result: deps.services.locks.acquire({ projectId, ownerTaskId, patterns }) }
+    },
+    'locks/release': (_event, request) => {
+      const { lockId } = request as IpcContract['locks/release']['request']
+      deps.services.locks.release(lockId)
+      return undefined
+    },
   }
 
   for (const [channel, handler] of Object.entries(handlers)) {

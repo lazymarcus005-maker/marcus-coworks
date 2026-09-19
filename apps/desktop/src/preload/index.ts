@@ -84,6 +84,12 @@ const api: StudioApi = {
     diff: (worktreeId) => invoke('worktrees/diff', { worktreeId }),
     discard: (worktreeId, force) => invoke('worktrees/discard', { worktreeId, force }),
   },
+  locks: {
+    list: (projectId) => invoke('locks/list', { projectId }),
+    acquire: (projectId, ownerTaskId, patterns) =>
+      invoke('locks/acquire', { projectId, ownerTaskId, patterns }),
+    release: (lockId) => invoke('locks/release', { lockId }),
+  },
 }
 
 contextBridge.exposeInMainWorld('studio', api)

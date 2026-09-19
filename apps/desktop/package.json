@@ -20,7 +20,8 @@
     "node-pty": "^1.1.0",
     "@xterm/xterm": "^5.5.0",
     "@xterm/addon-fit": "^0.10.0",
-    "@studio/worktree-manager": "*"
+    "@studio/worktree-manager": "*",
+    "@studio/lock-manager": "*"
   },
   "devDependencies": {
     "electron": "^39.2.0",
