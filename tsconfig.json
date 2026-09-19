@@ -13,6 +13,8 @@
     "apps/desktop/src/renderer/src/**/*.ts",
     "apps/desktop/src/renderer/src/**/*.tsx",
     "apps/desktop/test/**/*.ts",
+    "apps/desktop/test/**/*.e2e.ts",
+    "vitest.e2e.config.ts",
     "vitest.config.ts"
   ],
   "exclude": ["**/out/**", "**/dist/**", "**/node_modules/**"]

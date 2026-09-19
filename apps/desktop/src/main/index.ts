@@ -9,6 +9,12 @@ import { createStudioWindow } from './window.js'
 
 const mainDir = dirname(fileURLToPath(import.meta.url))
 
+// Test hook: run the app against an isolated data directory so E2E tests
+// can verify restart-restore without touching real user state.
+if (process.env.STUDIO_USER_DATA_DIR) {
+  app.setPath('userData', process.env.STUDIO_USER_DATA_DIR)
+}
+
 let services: StudioServices | undefined
 const chatEventTargets = new Set<WebContents>()
 

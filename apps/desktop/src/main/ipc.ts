@@ -93,10 +93,11 @@ export function registerIpcHandlers(ipcMain: IpcMainLike, deps: MainDependencies
       const { id } = request as IpcContract['providers/test-saved']['request']
       return deps.services.providers.testSaved(id)
     },
-    'chat/start': (_event, request) => {
+    'chat/start': async (_event, request) => {
       const { projectId } = request as IpcContract['chat/start']['request']
       const project = manager().getProject(projectId)
-      return deps.services.chat.ensureSession(project)
+      const sessionId = await deps.services.chat.ensureSession(project)
+      return { sessionId }
     },
     'chat/send': async (_event, request) => {
       const { projectId, text } = request as IpcContract['chat/send']['request']
@@ -110,10 +111,11 @@ export function registerIpcHandlers(ipcMain: IpcMainLike, deps: MainDependencies
       await deps.services.chat.stop(project)
       return undefined
     },
-    'chat/history': (_event, request) => {
+    'chat/history': async (_event, request) => {
       const { projectId } = request as IpcContract['chat/history']['request']
       const project = manager().getProject(projectId)
-      return deps.services.chat.history(project)
+      const messages = await deps.services.chat.history(project)
+      return { messages }
     },
     'tasks/state': (_event, request) => {
       const { projectId } = request as IpcContract['tasks/state']['request']

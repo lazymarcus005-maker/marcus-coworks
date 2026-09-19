@@ -17,13 +17,15 @@
     "test:watch": "vitest",
     "build": "npm run build --workspace @studio/desktop",
     "smoke": "npm run smoke --workspace @studio/desktop",
-    "dev": "npm run dev --workspace @studio/desktop"
+    "dev": "npm run dev --workspace @studio/desktop",
+    "test:e2e": "npm run build && vitest run --config vitest.e2e.config.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.2",
     "@types/node": "^26.0.0",
     "typescript": "^5.9.3",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "playwright-core": "^1.56.0"
   },
   "engines": {
     "node": ">=22"
