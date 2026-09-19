@@ -1,7 +1,7 @@
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { HealthInfo } from '@studio/shared'
-import { CHAT_EVENT_CHANNEL } from '@studio/shared'
+import { CHAT_EVENT_CHANNEL, TERMINAL_EVENT_CHANNEL } from '@studio/shared'
 import { app, BrowserWindow, dialog, ipcMain, type WebContents } from 'electron'
 import { registerIpcHandlers } from './ipc.js'
 import { createServices, type StudioServices } from './services.js'
@@ -57,6 +57,14 @@ function broadcastChatEvent(event: unknown): void {
   }
 }
 
+function broadcastTerminalEvent(event: unknown): void {
+  for (const contents of chatEventTargets) {
+    if (!contents.isDestroyed()) {
+      contents.send(TERMINAL_EVENT_CHANNEL, event)
+    }
+  }
+}
+
 app.on('web-contents-created', (_event, contents) => {
   if (contents.getType() === 'window') {
     chatEventTargets.add(contents)
@@ -69,7 +77,7 @@ app.on('window-all-closed', () => {
 })
 
 app.whenReady().then(() => {
-  services = createServices(app.getPath('userData'), broadcastChatEvent)
+  services = createServices(app.getPath('userData'), broadcastChatEvent, broadcastTerminalEvent)
 
   registerIpcHandlers(ipcMain, { health: healthInfo, pickFolder, services })
 
@@ -92,6 +100,7 @@ app.whenReady().then(() => {
 })
 
 app.on('will-quit', () => {
+  services?.terminals.disposeAll()
   services?.runtime.dispose().catch(() => {})
   services?.db.close()
 })

@@ -7,6 +7,8 @@ export default defineConfig({
     build: {
       rollupOptions: {
         input: { index: resolve(__dirname, 'src/main/index.ts') },
+        // Native module: must be required at runtime, not bundled.
+        external: ['node-pty'],
       },
     },
   },

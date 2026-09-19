@@ -16,7 +16,9 @@ import { KeychainSecretStore, type SecretStore } from '@studio/secrets'
 import type { ChatPushEvent } from '@studio/shared'
 import { TaskManager } from '@studio/task-manager'
 import { ChatService } from './chat.js'
+import { listDirectory } from './explorer.js'
 import { ProviderService } from './providers.js'
+import { type TerminalPushEvent, TerminalService } from './terminal.js'
 
 export const KEYCHAIN_SERVICE = 'com.marcus-coworks.agent-studio'
 
@@ -28,12 +30,15 @@ export interface StudioServices {
   chat: ChatService
   tasks: TaskManager
   runtime: OpenCodeRuntime
+  terminals: TerminalService
+  explorer: typeof listDirectory
 }
 
 function buildServices(
   userDataDir: string,
   secrets: SecretStore,
   onChatEvent: (event: ChatPushEvent) => void,
+  onTerminalEvent: (event: TerminalPushEvent) => void = () => {},
 ): StudioServices {
   const db = SqliteDb.open(join(userDataDir, 'studio.db'))
   migrate(db)
@@ -67,7 +72,19 @@ function buildServices(
     onEvent: onChatEvent,
   })
 
-  return { db, projectManager, secrets, providers, chat, tasks, runtime }
+  const terminals = new TerminalService({ onEvent: onTerminalEvent })
+
+  return {
+    db,
+    projectManager,
+    secrets,
+    providers,
+    chat,
+    tasks,
+    runtime,
+    terminals,
+    explorer: listDirectory,
+  }
 }
 
 /**
@@ -78,8 +95,14 @@ function buildServices(
 export function createServices(
   userDataDir: string,
   onChatEvent: (event: ChatPushEvent) => void = () => {},
+  onTerminalEvent: (event: TerminalPushEvent) => void = () => {},
 ): StudioServices {
-  return buildServices(userDataDir, new KeychainSecretStore(KEYCHAIN_SERVICE), onChatEvent)
+  return buildServices(
+    userDataDir,
+    new KeychainSecretStore(KEYCHAIN_SERVICE),
+    onChatEvent,
+    onTerminalEvent,
+  )
 }
 
 /** Test/preview variant with an in-memory secret store. */
@@ -87,6 +110,7 @@ export function createServicesWithSecrets(
   userDataDir: string,
   secrets: SecretStore,
   onChatEvent: (event: ChatPushEvent) => void = () => {},
+  onTerminalEvent: (event: TerminalPushEvent) => void = () => {},
 ): StudioServices {
-  return buildServices(userDataDir, secrets, onChatEvent)
+  return buildServices(userDataDir, secrets, onChatEvent, onTerminalEvent)
 }

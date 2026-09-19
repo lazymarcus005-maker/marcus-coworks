@@ -1,5 +1,5 @@
 import type { IpcChannel, IpcContract, StudioApi } from '@studio/shared'
-import { CHAT_EVENT_CHANNEL } from '@studio/shared'
+import { CHAT_EVENT_CHANNEL, TERMINAL_EVENT_CHANNEL } from '@studio/shared'
 import { contextBridge, ipcRenderer } from 'electron'
 
 async function invoke<C extends IpcChannel>(
@@ -53,6 +53,27 @@ const api: StudioApi = {
     add: (projectId, title, description) => invoke('tasks/add', { projectId, title, description }),
     update: (taskId, fields) => invoke('tasks/update', { taskId, ...fields }),
     cancel: (taskId) => invoke('tasks/cancel', { taskId }),
+  },
+  fs: {
+    list: (projectId, path) => invoke('fs/list', { projectId, path }),
+  },
+  terminal: {
+    create: (projectId, size) =>
+      invoke('terminal/create', {
+        projectId,
+        cols: size?.cols,
+        rows: size?.rows,
+      }),
+    write: (terminalId, data) => invoke('terminal/write', { terminalId, data }),
+    resize: (terminalId, cols, rows) => invoke('terminal/resize', { terminalId, cols, rows }),
+    dispose: (terminalId) => invoke('terminal/dispose', { terminalId }),
+    list: (projectId) => invoke('terminal/list', { projectId }),
+    onEvent: (listener) => {
+      const handler = (_event: unknown, payload: Parameters<typeof listener>[0]) =>
+        listener(payload)
+      ipcRenderer.on(TERMINAL_EVENT_CHANNEL, handler)
+      return () => ipcRenderer.removeListener(TERMINAL_EVENT_CHANNEL, handler)
+    },
   },
 }
 

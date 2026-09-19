@@ -3,7 +3,9 @@ import { createSignal, Show } from 'solid-js'
 import { createChatStore } from '../state/chat.js'
 import type { ProjectsStore } from '../state/projects.js'
 import { ChatPanel } from './ChatPanel.js'
+import { ExplorerPanel } from './ExplorerPanel.js'
 import { TasksPanel } from './TasksPanel.js'
+import { TerminalDock } from './TerminalDock.js'
 
 export function ProjectView(props: { project: ProjectWorkspace; store: ProjectsStore }) {
   const [editing, setEditing] = createSignal(false)
@@ -91,11 +93,19 @@ export function ProjectView(props: { project: ProjectWorkspace; store: ProjectsS
         </Show>
       </div>
       <div class="project-body">
-        <div class="chat-column">
-          <ChatPanel store={chat} projectId={() => props.project?.id} />
+        <div class="explorer-column">
+          <ExplorerPanel projectId={() => props.project?.id} />
         </div>
-        <div class="side-column">
-          <TasksPanel projectId={() => props.project?.id} />
+        <div class="main-column">
+          <div class="main-rows">
+            <div class="chat-column">
+              <ChatPanel store={chat} projectId={() => props.project?.id} />
+            </div>
+            <div class="side-column">
+              <TasksPanel projectId={() => props.project?.id} />
+            </div>
+          </div>
+          <TerminalDock projectId={() => props.project?.id} />
         </div>
       </div>
     </div>

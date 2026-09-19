@@ -140,6 +140,36 @@ export function registerIpcHandlers(ipcMain: IpcMainLike, deps: MainDependencies
       const { taskId } = request as IpcContract['tasks/cancel']['request']
       return { task: deps.services.tasks.cancelTask(taskId) }
     },
+    'fs/list': (_event, request) => {
+      const { projectId, path } = request as IpcContract['fs/list']['request']
+      const project = manager().getProject(projectId)
+      return { entries: deps.services.explorer(project.path, path ?? '.') }
+    },
+    'terminal/create': (_event, request) => {
+      const { projectId, cols, rows } = request as IpcContract['terminal/create']['request']
+      const project = manager().getProject(projectId)
+      const terminal = deps.services.terminals.create(project.id, project.path, { cols, rows })
+      return { terminal }
+    },
+    'terminal/write': (_event, request) => {
+      const { terminalId, data } = request as IpcContract['terminal/write']['request']
+      deps.services.terminals.write(terminalId, data)
+      return undefined
+    },
+    'terminal/resize': (_event, request) => {
+      const { terminalId, cols, rows } = request as IpcContract['terminal/resize']['request']
+      deps.services.terminals.resize(terminalId, cols, rows)
+      return undefined
+    },
+    'terminal/dispose': (_event, request) => {
+      const { terminalId } = request as IpcContract['terminal/dispose']['request']
+      deps.services.terminals.dispose(terminalId)
+      return undefined
+    },
+    'terminal/list': (_event, request) => {
+      const { projectId } = request as IpcContract['terminal/list']['request']
+      return { terminals: deps.services.terminals.list(projectId) }
+    },
   }
 
   for (const [channel, handler] of Object.entries(handlers)) {

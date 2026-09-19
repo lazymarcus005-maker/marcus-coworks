@@ -1,5 +1,6 @@
 import type { HealthInfo } from '../domain/app.js'
 import type { ChatMessage, ChatPushEvent } from '../domain/chat.js'
+import type { FileEntry, TerminalInfo } from '../domain/fs.js'
 import type {
   ActivityEvent,
   ProjectTab,
@@ -93,10 +94,25 @@ export interface IpcContract {
     response: { task: HarnessTask }
   }
   'tasks/cancel': { request: { taskId: string }; response: { task: HarnessTask } }
+  'fs/list': { request: { projectId: string; path?: string }; response: { entries: FileEntry[] } }
+  'terminal/create': {
+    request: { projectId: string; cols?: number; rows?: number }
+    response: { terminal: TerminalInfo }
+  }
+  'terminal/write': { request: { terminalId: string; data: string }; response: undefined }
+  'terminal/resize': {
+    request: { terminalId: string; cols: number; rows: number }
+    response: undefined
+  }
+  'terminal/dispose': { request: { terminalId: string }; response: undefined }
+  'terminal/list': { request: { projectId: string }; response: { terminals: TerminalInfo[] } }
 }
 
 /** Main → renderer push channel for live chat events. */
 export const CHAT_EVENT_CHANNEL = 'studio:chat/event'
+
+/** Main → renderer push channel for terminal output/exit events. */
+export const TERMINAL_EVENT_CHANNEL = 'studio:terminal/event'
 
 export type IpcChannel = keyof IpcContract
 
@@ -156,6 +172,26 @@ export interface StudioApi {
       fields: { title?: string; description?: string; status?: TaskStatus },
     ): Promise<{ task: HarnessTask }>
     cancel(taskId: string): Promise<{ task: HarnessTask }>
+  }
+  fs: {
+    list(projectId: string, path?: string): Promise<{ entries: FileEntry[] }>
+  }
+  terminal: {
+    create(
+      projectId: string,
+      size?: { cols?: number; rows?: number },
+    ): Promise<{ terminal: TerminalInfo }>
+    write(terminalId: string, data: string): Promise<void>
+    resize(terminalId: string, cols: number, rows: number): Promise<void>
+    dispose(terminalId: string): Promise<void>
+    list(projectId: string): Promise<{ terminals: TerminalInfo[] }>
+    onEvent(
+      listener: (
+        event:
+          | { type: 'data'; projectId: string; terminalId: string; data: string }
+          | { type: 'exit'; projectId: string; terminalId: string },
+      ) => void,
+    ): () => void
   }
 }
 
