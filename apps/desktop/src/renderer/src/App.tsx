@@ -1,5 +1,6 @@
 import { createResource, createSignal, onMount, Show } from 'solid-js'
 import { InboxBell } from './components/InboxBell.js'
+import { PauseButton } from './components/PauseControls.js'
 import { ProjectView } from './components/ProjectView.js'
 import { SettingsModal } from './components/SettingsModal.js'
 import { TabsBar } from './components/TabsBar.js'
@@ -28,6 +29,7 @@ export default function App() {
           )}
         </Show>
         <span class="spacer" />
+        <PauseButton />
         <InboxBell />
         <button
           type="button"

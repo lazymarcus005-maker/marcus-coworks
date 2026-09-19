@@ -4,6 +4,7 @@ import type { ChatMessage, ChatPushEvent } from '../domain/chat.js'
 import type { FileEntry, TerminalInfo } from '../domain/fs.js'
 import type { InboxDecision, InboxItem, InboxItemStatus } from '../domain/inbox.js'
 import type { AcquireResult, ScopeLock } from '../domain/lock.js'
+import type { PauseState } from '../domain/pause.js'
 import type {
   ActivityEvent,
   ProjectTab,
@@ -193,6 +194,15 @@ export interface IpcContract {
     request: { taskId: string }
     response: { attempts: AttemptRecord[] }
   }
+  'pause/state': {
+    request: undefined
+    response: PauseState
+  }
+  'pause/set-global': { request: { paused: boolean }; response: PauseState }
+  'pause/set-project': {
+    request: { projectId: string; paused: boolean }
+    response: PauseState
+  }
   'attempts/retry-or-escalate': {
     request: { projectId: string; taskId: string; rejectionReason?: string }
     response: { escalated: boolean; attempt?: AttemptRecord }
@@ -349,6 +359,11 @@ export interface StudioApi {
       implementerSessionId?: string,
     ): Promise<{ decision: import('../domain/verifier.js').VerifierDecision }>
   }
+  pause: {
+    state(): Promise<PauseState>
+    setGlobal(paused: boolean): Promise<PauseState>
+    setProject(projectId: string, paused: boolean): Promise<PauseState>
+  }
   attempts: {
     start(
       projectId: string,
@@ -423,6 +438,9 @@ export function ipcChannels(): IpcChannel[] {
     'verification/run',
     'verification/history',
     'verifier/review',
+    'pause/state',
+    'pause/set-global',
+    'pause/set-project',
     'attempts/start',
     'attempts/end',
     'attempts/history',

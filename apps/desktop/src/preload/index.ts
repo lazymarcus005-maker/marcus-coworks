@@ -110,6 +110,11 @@ const api: StudioApi = {
     review: (projectId, taskId, worktreeId, implementerSessionId) =>
       invoke('verifier/review', { projectId, taskId, worktreeId, implementerSessionId }),
   },
+  pause: {
+    state: () => invoke('pause/state', undefined),
+    setGlobal: (paused) => invoke('pause/set-global', { paused }),
+    setProject: (projectId, paused) => invoke('pause/set-project', { projectId, paused }),
+  },
   attempts: {
     start: (projectId, taskId, agentId, model) =>
       invoke('attempts/start', { projectId, taskId, agentId, model }),

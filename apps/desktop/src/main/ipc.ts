@@ -307,6 +307,17 @@ export function registerIpcHandlers(ipcMain: IpcMainLike, deps: MainDependencies
           : deps.services.verification.historyForProject(projectId),
       }
     },
+    'pause/state': () => deps.services.pause.snapshot(),
+    'pause/set-global': (_event, request) => {
+      const { paused } = request as IpcContract['pause/set-global']['request']
+      deps.services.pause.setGlobal(paused)
+      return deps.services.pause.snapshot()
+    },
+    'pause/set-project': (_event, request) => {
+      const { projectId, paused } = request as IpcContract['pause/set-project']['request']
+      deps.services.pause.setProject(projectId, paused)
+      return deps.services.pause.snapshot()
+    },
     'attempts/start': async (_event, request) => {
       const { projectId, taskId, agentId, model } =
         request as IpcContract['attempts/start']['request']

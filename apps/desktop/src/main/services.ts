@@ -12,6 +12,7 @@ import {
   ProjectRepository,
   ProviderRepository,
   SessionRepository,
+  SettingsRepository,
   SqliteDb,
   TabRepository,
   TaskRepository,
@@ -28,6 +29,7 @@ import { AttemptManager, DEFAULT_MAX_ATTEMPTS } from './attempts.js'
 import { ChatService } from './chat.js'
 import { listDirectory } from './explorer.js'
 import { InboxManager } from './inbox.js'
+import { PauseManager } from './pause.js'
 import { ProviderService } from './providers.js'
 import { type TerminalPushEvent, TerminalService } from './terminal.js'
 import { VerificationManager } from './verification.js'
@@ -48,6 +50,7 @@ export interface StudioServices {
   verification: VerificationManager
   verifier: VerifierService
   attempts: AttemptManager
+  pause: PauseManager
   policy: typeof loadPolicy
   runtime: OpenCodeRuntime
   terminals: TerminalService
@@ -121,6 +124,19 @@ function buildServices(
   })
 
   const runtime = new OpenCodeRuntime()
+  const settings = new SettingsRepository(db)
+  const pause = new PauseManager({
+    settings,
+    activity,
+    reconcileLocks: (projectId) => {
+      locks.reconcile(projectId)
+    },
+    disposeProjectTerminals: (projectId) => {
+      if (projectId === '*') terminals.disposeAll()
+      else terminals.disposeProject(projectId)
+    },
+  })
+
   const attemptManager = new AttemptManager({
     attempts: new AttemptRepository(db),
     goals: new GoalRepository(db),
@@ -154,6 +170,7 @@ function buildServices(
     activity,
     tasks,
     inbox,
+    pause,
     onEvent: onChatEvent,
   })
 
@@ -172,6 +189,7 @@ function buildServices(
     verification,
     verifier,
     attempts: attemptManager,
+    pause,
     policy: loadPolicy,
     runtime,
     terminals,

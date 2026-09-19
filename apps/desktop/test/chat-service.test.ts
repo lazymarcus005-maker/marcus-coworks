@@ -23,6 +23,9 @@ const fakeInbox = {
     return { id: 'item', status: 'open', createdAt: '', evidenceIds: [] }
   },
 } as unknown as InboxManager
+const fakePause = {
+  assertCanAct: () => {},
+} as unknown as import('../src/main/pause.js').PauseManager
 
 class FakeRuntime implements CodingAgentRuntime {
   nextSessionId = 1
@@ -99,6 +102,7 @@ beforeAll(() => {
       activity: new ActivityRepository(db),
     }),
     inbox: fakeInbox,
+    pause: fakePause,
     onEvent: (event) => pushed.push(event),
     now: () => new Date('2026-09-19T00:00:00Z'),
   })

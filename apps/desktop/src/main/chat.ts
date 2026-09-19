@@ -9,6 +9,7 @@ import type {
 } from '@studio/shared'
 import { isSubstantialRequest, type TaskManager } from '@studio/task-manager'
 import type { InboxManager } from './inbox.js'
+import type { PauseManager } from './pause.js'
 
 export interface ChatServiceDeps {
   runtime: CodingAgentRuntime
@@ -17,6 +18,7 @@ export interface ChatServiceDeps {
   activity: ActivityRepository
   tasks: TaskManager
   inbox: InboxManager
+  pause: PauseManager
   /** Push a resolved event to the renderer. */
   onEvent: (event: ChatPushEvent) => void
   now?: () => Date
@@ -150,6 +152,7 @@ export class ChatService {
   }
 
   async send(project: ProjectWorkspace, text: string): Promise<void> {
+    this.deps.pause.assertCanAct(project.id, 'send a message')
     const sessionId = await this.ensureSession(project)
 
     // Policy gate: the message is an agent instruction; block instructions

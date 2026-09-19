@@ -4,6 +4,7 @@ import { createChatStore } from '../state/chat.js'
 import type { ProjectsStore } from '../state/projects.js'
 import { ChatPanel } from './ChatPanel.js'
 import { ExplorerPanel } from './ExplorerPanel.js'
+import { ProjectPauseButton } from './PauseControls.js'
 import { TasksPanel } from './TasksPanel.js'
 import { TerminalDock } from './TerminalDock.js'
 
@@ -87,6 +88,7 @@ export function ProjectView(props: { project: ProjectWorkspace; store: ProjectsS
             </span>
           }
         >
+          <ProjectPauseButton projectId={() => props.project?.id} />
           <button type="button" class="btn-ghost" onClick={() => setRemoving(true)}>
             Remove…
           </button>

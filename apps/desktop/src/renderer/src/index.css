@@ -892,3 +892,11 @@ body {
 .inbox-when {
   font-size: 11px;
 }
+
+.paused-banner {
+  background: rgba(224, 175, 104, 0.15);
+  color: var(--warn);
+  padding: 6px 20px;
+  font-size: 12px;
+  border-bottom: 1px solid var(--warn);
+}
