@@ -307,6 +307,45 @@ export function registerIpcHandlers(ipcMain: IpcMainLike, deps: MainDependencies
           : deps.services.verification.historyForProject(projectId),
       }
     },
+    'attempts/start': async (_event, request) => {
+      const { projectId, taskId, agentId, model } =
+        request as IpcContract['attempts/start']['request']
+      const project = manager().getProject(projectId)
+      return deps.services.attempts.startAttempt({
+        projectId,
+        projectPath: project.path,
+        taskId,
+        agentId,
+        model,
+      })
+    },
+    'attempts/end': (_event, request) => {
+      const { attemptId, outcome, failureClass, summary, evidenceIds } =
+        request as IpcContract['attempts/end']['request']
+      return {
+        record: deps.services.attempts.endAttempt(attemptId, {
+          outcome,
+          failureClass,
+          summary,
+          evidenceIds,
+        }),
+      }
+    },
+    'attempts/history': (_event, request) => {
+      const { taskId } = request as IpcContract['attempts/history']['request']
+      return { attempts: deps.services.attempts.history(taskId) }
+    },
+    'attempts/retry-or-escalate': async (_event, request) => {
+      const { projectId, taskId, rejectionReason } =
+        request as IpcContract['attempts/retry-or-escalate']['request']
+      const project = manager().getProject(projectId)
+      return deps.services.attempts.retryOrEscalate({
+        projectId,
+        projectPath: project.path,
+        taskId,
+        rejectionReason,
+      })
+    },
     'verifier/review': async (_event, request) => {
       const { projectId, taskId, worktreeId, implementerSessionId } =
         request as IpcContract['verifier/review']['request']

@@ -1,4 +1,5 @@
 import type { HealthInfo } from '../domain/app.js'
+import type { AttemptRecord } from '../domain/attempt.js'
 import type { ChatMessage, ChatPushEvent } from '../domain/chat.js'
 import type { FileEntry, TerminalInfo } from '../domain/fs.js'
 import type { InboxDecision, InboxItem, InboxItemStatus } from '../domain/inbox.js'
@@ -174,6 +175,28 @@ export interface IpcContract {
     request: { taskId?: string; projectId: string }
     response: { evidence: VerificationEvidence[] }
   }
+  'attempts/start': {
+    request: { projectId: string; taskId: string; agentId?: string; model?: string }
+    response: { record: AttemptRecord; worktreeId: string }
+  }
+  'attempts/end': {
+    request: {
+      attemptId: string
+      outcome: 'approved' | 'rejected' | 'failed' | 'escalated' | 'cancelled'
+      failureClass?: string
+      summary?: string
+      evidenceIds?: string[]
+    }
+    response: { record: AttemptRecord }
+  }
+  'attempts/history': {
+    request: { taskId: string }
+    response: { attempts: AttemptRecord[] }
+  }
+  'attempts/retry-or-escalate': {
+    request: { projectId: string; taskId: string; rejectionReason?: string }
+    response: { escalated: boolean; attempt?: AttemptRecord }
+  }
   'verifier/review': {
     request: {
       projectId: string
@@ -326,6 +349,29 @@ export interface StudioApi {
       implementerSessionId?: string,
     ): Promise<{ decision: import('../domain/verifier.js').VerifierDecision }>
   }
+  attempts: {
+    start(
+      projectId: string,
+      taskId: string,
+      agentId?: string,
+      model?: string,
+    ): Promise<{ record: AttemptRecord; worktreeId: string }>
+    end(
+      attemptId: string,
+      input: {
+        outcome: 'approved' | 'rejected' | 'failed' | 'escalated' | 'cancelled'
+        failureClass?: string
+        summary?: string
+        evidenceIds?: string[]
+      },
+    ): Promise<{ record: AttemptRecord }>
+    history(taskId: string): Promise<{ attempts: AttemptRecord[] }>
+    retryOrEscalate(
+      projectId: string,
+      taskId: string,
+      rejectionReason?: string,
+    ): Promise<{ escalated: boolean; attempt?: AttemptRecord }>
+  }
 }
 
 export function ipcChannels(): IpcChannel[] {
@@ -377,5 +423,9 @@ export function ipcChannels(): IpcChannel[] {
     'verification/run',
     'verification/history',
     'verifier/review',
+    'attempts/start',
+    'attempts/end',
+    'attempts/history',
+    'attempts/retry-or-escalate',
   ]
 }

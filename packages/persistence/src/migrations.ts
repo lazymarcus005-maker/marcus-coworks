@@ -207,6 +207,25 @@ CREATE TABLE verification_evidence (
 CREATE INDEX idx_evidence_task ON verification_evidence(task_id, started_at);
 `
 
+const MIGRATION_0008 = `
+CREATE TABLE attempts (
+  id TEXT PRIMARY KEY,
+  task_id TEXT NOT NULL,
+  project_id TEXT NOT NULL,
+  attempt INTEGER NOT NULL,
+  agent_id TEXT,
+  model TEXT,
+  worktree_id TEXT,
+  started_at TEXT NOT NULL,
+  ended_at TEXT,
+  outcome TEXT,
+  failure_class TEXT,
+  summary TEXT,
+  evidence_ids_json TEXT NOT NULL DEFAULT '[]'
+);
+CREATE INDEX idx_attempts_task ON attempts(task_id, attempt);
+`
+
 export const MIGRATIONS: Migration[] = [
   { id: 1, name: 'initial_schema', sql: MIGRATION_0001 },
   { id: 2, name: 'task_source_and_updated_at', sql: MIGRATION_0002 },
@@ -215,6 +234,7 @@ export const MIGRATIONS: Migration[] = [
   { id: 5, name: 'locks', sql: MIGRATION_0005 },
   { id: 6, name: 'inbox_items', sql: MIGRATION_0006 },
   { id: 7, name: 'evidence', sql: MIGRATION_0007 },
+  { id: 8, name: 'attempts', sql: MIGRATION_0008 },
 ]
 
 /** Applies pending migrations. Repeatable: already-applied ids are skipped. */

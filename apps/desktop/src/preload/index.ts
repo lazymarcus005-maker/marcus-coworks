@@ -110,6 +110,14 @@ const api: StudioApi = {
     review: (projectId, taskId, worktreeId, implementerSessionId) =>
       invoke('verifier/review', { projectId, taskId, worktreeId, implementerSessionId }),
   },
+  attempts: {
+    start: (projectId, taskId, agentId, model) =>
+      invoke('attempts/start', { projectId, taskId, agentId, model }),
+    end: (attemptId, input) => invoke('attempts/end', { attemptId, ...input }),
+    history: (taskId) => invoke('attempts/history', { taskId }),
+    retryOrEscalate: (projectId, taskId, rejectionReason) =>
+      invoke('attempts/retry-or-escalate', { projectId, taskId, rejectionReason }),
+  },
 }
 
 contextBridge.exposeInMainWorld('studio', api)

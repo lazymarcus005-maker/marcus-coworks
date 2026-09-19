@@ -55,6 +55,10 @@ const COVERAGE: Record<IpcChannel, true> = {
   'verification/run': true,
   'verification/history': true,
   'verifier/review': true,
+  'attempts/start': true,
+  'attempts/end': true,
+  'attempts/history': true,
+  'attempts/retry-or-escalate': true,
 }
 
 describe('ipc contract', () => {

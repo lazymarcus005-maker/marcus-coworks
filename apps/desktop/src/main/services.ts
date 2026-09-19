@@ -3,6 +3,7 @@ import { LockManager } from '@studio/lock-manager'
 import { OpenCodeRuntime } from '@studio/opencode-adapter'
 import {
   ActivityRepository,
+  AttemptRepository,
   EvidenceRepository,
   GoalRepository,
   InboxRepository,
@@ -23,6 +24,7 @@ import { KeychainSecretStore, type SecretStore } from '@studio/secrets'
 import type { ChatPushEvent } from '@studio/shared'
 import { TaskManager } from '@studio/task-manager'
 import { gitRunner, WorktreeManager } from '@studio/worktree-manager'
+import { AttemptManager, DEFAULT_MAX_ATTEMPTS } from './attempts.js'
 import { ChatService } from './chat.js'
 import { listDirectory } from './explorer.js'
 import { InboxManager } from './inbox.js'
@@ -45,6 +47,7 @@ export interface StudioServices {
   inbox: InboxManager
   verification: VerificationManager
   verifier: VerifierService
+  attempts: AttemptManager
   policy: typeof loadPolicy
   runtime: OpenCodeRuntime
   terminals: TerminalService
@@ -118,6 +121,21 @@ function buildServices(
   })
 
   const runtime = new OpenCodeRuntime()
+  const attemptManager = new AttemptManager({
+    attempts: new AttemptRepository(db),
+    goals: new GoalRepository(db),
+    tasks,
+    worktrees,
+    inbox,
+    activity,
+    policyMaxAttempts: (projectId) => {
+      const project = projectManager.listProjects().find((entry) => entry.id === projectId)
+      return project
+        ? loadPolicy(project.path).policy.changeLimits.maxAttempts
+        : DEFAULT_MAX_ATTEMPTS
+    },
+  })
+
   const verifier = new VerifierService({
     runtime,
     tasks,
@@ -153,6 +171,7 @@ function buildServices(
     inbox,
     verification,
     verifier,
+    attempts: attemptManager,
     policy: loadPolicy,
     runtime,
     terminals,
