@@ -33,6 +33,7 @@ import { ContextManager } from './context.js'
 import { listDirectory } from './explorer.js'
 import { InboxManager } from './inbox.js'
 import { McpManager } from './mcp.js'
+import { ModeManager } from './modes.js'
 import { PauseManager } from './pause.js'
 import { ProviderService } from './providers.js'
 import { SchedulerService } from './scheduler.js'
@@ -62,6 +63,7 @@ export interface StudioServices {
   agents: AgentManager
   context: ContextManager
   scheduler: SchedulerService
+  modes: ModeManager
   policy: typeof loadPolicy
   runtime: OpenCodeRuntime
   terminals: TerminalService
@@ -137,6 +139,8 @@ function buildServices(
   })
 
   const runtime = new OpenCodeRuntime()
+  const modes = new ModeManager({ settings: new SettingsRepository(db), activity })
+
   const scheduler = new SchedulerService({ settings: new SettingsRepository(db), activity })
 
   const context = new ContextManager({ runtime, activity })
@@ -232,6 +236,7 @@ function buildServices(
     agents,
     context,
     scheduler,
+    modes,
     policy: loadPolicy,
     runtime,
     terminals,

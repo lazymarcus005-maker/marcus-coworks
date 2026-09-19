@@ -4,6 +4,7 @@ import type { AttemptOutcome, AttemptRecord, FailureSignal } from '@studio/share
 import type { TaskManager } from '@studio/task-manager'
 import type { WorktreeManager } from '@studio/worktree-manager'
 import type { InboxManager } from './inbox.js'
+import type { ModeManager } from './modes.js'
 import type { PauseManager } from './pause.js'
 
 export const DEFAULT_MAX_ATTEMPTS = 3
@@ -15,6 +16,7 @@ export interface AttemptManagerDeps {
   worktrees: WorktreeManager
   inbox: InboxManager
   pause?: PauseManager
+  modes?: ModeManager
   activity: ActivityRepository
   /** Per-project policy attempt ceiling (already policy-sanitized). */
   policyMaxAttempts?: (projectId: string) => number
@@ -68,6 +70,7 @@ export class AttemptManager {
     model?: string
   }): Promise<{ record: AttemptRecord; worktreeId: string }> {
     this.deps.pause?.assertCanAct(input.projectId, 'start an attempt')
+    this.deps.modes?.assertCanRunAutonomous(input.projectId, 'start an attempt')
     const task = this.deps.tasks
       .stateForProject(input.projectId)
       .tasks.find((entry) => entry.id === input.taskId)
@@ -180,6 +183,7 @@ export class AttemptManager {
     rejectionReason?: string
   }): Promise<{ escalated: boolean; attempt?: AttemptRecord }> {
     this.deps.pause?.assertCanAct(input.projectId, 'start an attempt')
+    this.deps.modes?.assertCanRunAutonomous(input.projectId, 'start an attempt')
     const task = this.deps.tasks
       .stateForProject(input.projectId)
       .tasks.find((entry) => entry.id === input.taskId)

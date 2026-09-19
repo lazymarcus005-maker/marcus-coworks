@@ -110,6 +110,11 @@ const api: StudioApi = {
     review: (projectId, taskId, worktreeId, implementerSessionId) =>
       invoke('verifier/review', { projectId, taskId, worktreeId, implementerSessionId }),
   },
+  modes: {
+    get: (projectId) => invoke('modes/get', { projectId }),
+    setAutonomy: (projectId, level) => invoke('modes/set-autonomy', { projectId, level }),
+    setModelMode: (projectId, mode) => invoke('modes/set-model-mode', { projectId, mode }),
+  },
   scheduler: {
     snapshot: () => invoke('scheduler/snapshot', undefined),
     setLimit: (resource, limit) => invoke('scheduler/set-limit', { resource, limit }),

@@ -7,6 +7,7 @@ import type { FileEntry, TerminalInfo } from '../domain/fs.js'
 import type { InboxDecision, InboxItem, InboxItemStatus } from '../domain/inbox.js'
 import type { AcquireResult, ScopeLock } from '../domain/lock.js'
 import type { McpConnectionStatus, McpScope, McpServerConfig } from '../domain/mcp.js'
+import type { ProjectModeSettings } from '../domain/modes.js'
 import type { PauseState } from '../domain/pause.js'
 import type {
   ActivityEvent,
@@ -198,6 +199,15 @@ export interface IpcContract {
   'attempts/history': {
     request: { taskId: string }
     response: { attempts: AttemptRecord[] }
+  }
+  'modes/get': { request: { projectId: string }; response: ProjectModeSettings }
+  'modes/set-autonomy': {
+    request: { projectId: string; level: 'L0' | 'L1' | 'L2' | 'L3' }
+    response: ProjectModeSettings
+  }
+  'modes/set-model-mode': {
+    request: { projectId: string; mode: 'auto' | 'fast' | 'quality' | 'manual' }
+    response: ProjectModeSettings
   }
   'scheduler/snapshot': {
     request: undefined
@@ -431,6 +441,14 @@ export interface StudioApi {
       implementerSessionId?: string,
     ): Promise<{ decision: import('../domain/verifier.js').VerifierDecision }>
   }
+  modes: {
+    get(projectId: string): Promise<ProjectModeSettings>
+    setAutonomy(projectId: string, level: 'L0' | 'L1' | 'L2' | 'L3'): Promise<ProjectModeSettings>
+    setModelMode(
+      projectId: string,
+      mode: 'auto' | 'fast' | 'quality' | 'manual',
+    ): Promise<ProjectModeSettings>
+  }
   scheduler: {
     snapshot(): Promise<SchedulerSnapshot>
     setLimit(
@@ -562,6 +580,9 @@ export function ipcChannels(): IpcChannel[] {
     'verification/run',
     'verification/history',
     'verifier/review',
+    'modes/get',
+    'modes/set-autonomy',
+    'modes/set-model-mode',
     'scheduler/snapshot',
     'scheduler/set-limit',
     'scheduler/cancel',

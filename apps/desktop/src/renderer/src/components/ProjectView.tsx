@@ -1,5 +1,5 @@
 import type { ProjectWorkspace, RemoveProjectOptions } from '@studio/shared'
-import { createSignal, Show } from 'solid-js'
+import { createEffect, createSignal, For, onMount, Show } from 'solid-js'
 import { createChatStore } from '../state/chat.js'
 import type { ProjectsStore } from '../state/projects.js'
 import { AgentTreePanel } from './AgentTreePanel.js'
@@ -19,6 +19,31 @@ export function ProjectView(props: { project: ProjectWorkspace; store: ProjectsS
 
   const project = () => props.project
   const chat = createChatStore(() => props.project?.id, props.store)
+  const [autonomy, setAutonomy] = createSignal<'L0' | 'L1' | 'L2' | 'L3'>('L2')
+  const [modelMode, setModelMode] = createSignal<'auto' | 'fast' | 'quality' | 'manual'>('auto')
+
+  onMount(() => {
+    const id = props.project?.id
+    if (!id) return
+    void window.studio.modes.get(id).then((settings) => {
+      setAutonomy(settings.autonomy)
+      setModelMode(settings.modelMode)
+    })
+  })
+
+  async function changeAutonomy(level: 'L0' | 'L1' | 'L2' | 'L3') {
+    const id = props.project?.id
+    if (!id) return
+    const settings = await window.studio.modes.setAutonomy(id, level)
+    setAutonomy(settings.autonomy)
+  }
+
+  async function changeModelMode(mode: 'auto' | 'fast' | 'quality' | 'manual') {
+    const id = props.project?.id
+    if (!id) return
+    const settings = await window.studio.modes.setModelMode(id, mode)
+    setModelMode(settings.modelMode)
+  }
 
   function startRename() {
     setDraftName(project().name)
@@ -69,6 +94,28 @@ export function ProjectView(props: { project: ProjectWorkspace; store: ProjectsS
         <span class="project-path">{project().path}</span>
         <span class="spacer" />
         <span class={`project-status status-${project().status}`}>{project().status}</span>
+        <select
+          class="mode-select"
+          title="Autonomy level (mechanically enforced)"
+          value={autonomy()}
+          onChange={(e) => void changeAutonomy(e.currentTarget.value as 'L0' | 'L1' | 'L2' | 'L3')}
+        >
+          <For each={['L0', 'L1', 'L2', 'L3']}>
+            {(level) => <option value={level}>{level}</option>}
+          </For>
+        </select>
+        <select
+          class="mode-select"
+          title="Model mode"
+          value={modelMode()}
+          onChange={(e) =>
+            void changeModelMode(e.currentTarget.value as 'auto' | 'fast' | 'quality' | 'manual')
+          }
+        >
+          <For each={['auto', 'fast', 'quality', 'manual']}>
+            {(mode) => <option value={mode}>{mode}</option>}
+          </For>
+        </select>
         <Show
           when={!removing()}
           fallback={

@@ -307,6 +307,18 @@ export function registerIpcHandlers(ipcMain: IpcMainLike, deps: MainDependencies
           : deps.services.verification.historyForProject(projectId),
       }
     },
+    'modes/get': (_event, request) => {
+      const { projectId } = request as IpcContract['modes/get']['request']
+      return deps.services.modes.forProject(projectId)
+    },
+    'modes/set-autonomy': (_event, request) => {
+      const { projectId, level } = request as IpcContract['modes/set-autonomy']['request']
+      return deps.services.modes.setAutonomy(projectId, level)
+    },
+    'modes/set-model-mode': (_event, request) => {
+      const { projectId, mode } = request as IpcContract['modes/set-model-mode']['request']
+      return deps.services.modes.setModelMode(projectId, mode)
+    },
     'scheduler/snapshot': () => deps.services.scheduler.snapshot(),
     'scheduler/set-limit': (_event, request) => {
       const { resource, limit } = request as IpcContract['scheduler/set-limit']['request']
@@ -466,6 +478,7 @@ export function registerIpcHandlers(ipcMain: IpcMainLike, deps: MainDependencies
     'verifier/review': async (_event, request) => {
       const { projectId, taskId, worktreeId, implementerSessionId } =
         request as IpcContract['verifier/review']['request']
+      deps.services.modes.assertCanRunAutonomous(projectId, 'run the verifier')
       const project = manager().getProject(projectId)
       const decision = await deps.services.verifier.reviewAttempt({
         projectId,
