@@ -54,9 +54,9 @@ body {
 .app-main {
   flex: 1;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
 }
 
 .health-card {
@@ -260,16 +260,19 @@ body {
 }
 
 .chat-column {
-  flex: 1;
-  min-width: 0;
+  flex: 1 1 auto;
+  min-width: 200px;
   display: flex;
   border-right: 1px solid var(--border);
 }
 
 .side-column {
-  width: 300px;
+  width: clamp(230px, 22vw, 300px);
   flex: none;
   display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .chat-panel {
@@ -347,6 +350,7 @@ body {
 
 .chat-input {
   flex: 1;
+  min-width: 0;
   resize: none;
   background: var(--bg-elevated);
   border: 1px solid var(--border);
@@ -531,15 +535,16 @@ body {
 }
 
 .explorer-column {
-  width: 210px;
+  width: clamp(160px, 15vw, 210px);
   flex: none;
   border-right: 1px solid var(--border);
   display: flex;
   min-height: 0;
+  min-width: 0;
 }
 
 .main-column {
-  flex: 1;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -547,9 +552,9 @@ body {
 }
 
 .main-rows {
-  flex: 1;
+  flex: 1 1 auto;
   display: flex;
-  min-height: 0;
+  min-height: 140px;
 }
 
 .explorer-panel {
@@ -659,7 +664,8 @@ body {
 }
 
 .terminal-dock-open {
-  height: 220px;
+  flex: 0 0 clamp(120px, 24vh, 240px);
+  min-height: 120px;
 }
 
 .terminal-dock-bar {
@@ -939,11 +945,6 @@ body {
   color: var(--text-muted);
 }
 
-.side-column {
-  flex-direction: column;
-  overflow-y: auto;
-}
-
 .context-body {
   display: flex;
   flex-direction: column;
@@ -1027,4 +1028,115 @@ body {
 
 .doctor-fail {
   color: var(--warn);
+}
+
+/* ============================================================
+   Responsive layout overrides — keep last so they win cascade.
+   Measured via CDP at 1440x900 / 1200x800 / 1024x700 / 960x600.
+   ============================================================ */
+
+.app-main {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  min-height: 0;
+  min-width: 0;
+  padding: 0;
+}
+
+.welcome {
+  align-self: stretch;
+}
+
+.project-view {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  align-self: stretch;
+}
+
+.project-body {
+  flex: 1 1 auto;
+  display: flex;
+  min-height: 0;
+  min-width: 0;
+}
+
+.project-header {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.project-path {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+
+.explorer-column {
+  width: clamp(160px, 15vw, 210px);
+  min-width: 0;
+}
+
+.main-column {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.main-rows {
+  flex: 1 1 auto;
+  display: flex;
+  min-height: 140px;
+}
+
+.chat-column {
+  flex: 1 1 auto;
+  min-width: 200px;
+}
+
+.side-column {
+  width: clamp(230px, 22vw, 300px);
+  min-width: 0;
+  min-height: 0;
+  flex: none;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.chat-panel {
+  min-width: 0;
+}
+
+.chat-list {
+  min-height: 0;
+}
+
+.chat-input {
+  min-width: 0;
+}
+
+.terminal-dock {
+  flex: none;
+}
+
+.terminal-dock-open {
+  flex: 0 0 clamp(120px, 24vh, 240px);
+  height: auto;
+  min-height: 120px;
+}
+
+.terminal-host {
+  min-height: 0;
+}
+
+.app-error {
+  flex: 1 1 200px;
+  min-width: 0;
 }
