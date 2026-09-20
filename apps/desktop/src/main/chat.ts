@@ -36,6 +36,8 @@ export interface ChatServiceDeps {
 export class ChatService {
   private readonly now: () => Date
   private wired = false
+  private statusPoller?: ReturnType<typeof setInterval>
+  private readonly lastStatus = new Map<string, string>()
 
   constructor(private readonly deps: ChatServiceDeps) {
     this.now = deps.now ?? (() => new Date())
@@ -46,6 +48,32 @@ export class ChatService {
     if (this.wired) return
     this.wired = true
     this.deps.runtime.subscribe((event) => this.handleRuntimeEvent(event))
+    this.startStatusPolling()
+  }
+
+  /**
+   * Polls the runtime's session status map every 2s and pushes
+   * session-status events. opencode 1.18 does not emit busy/idle on the
+   * global event stream, so polling is how busy/idle stay truthful — the
+   * renderer relies on them for the Stop button and streaming cursor.
+   */
+  startStatusPolling(): void {
+    if (this.statusPoller) return
+    this.statusPoller = setInterval(() => {
+      for (const project of this.deps.projects.list()) {
+        if (!project.sessionId) continue
+        const projectId = project.id
+        this.deps.runtime
+          .getStatus(project.sessionId)
+          .then((status) => {
+            if (this.lastStatus.get(projectId) === status) return
+            this.lastStatus.set(projectId, status)
+            this.deps.onEvent({ type: 'session-status', projectId, status })
+          })
+          .catch(() => undefined)
+      }
+    }, 2_000)
+    this.statusPoller.unref?.()
   }
 
   private projectForSession(sessionId: string): string | undefined {

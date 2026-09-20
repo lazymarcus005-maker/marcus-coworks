@@ -1,5 +1,6 @@
 import type { ChatMessage } from '@studio/shared'
 import { createEffect, createSignal, onCleanup } from 'solid-js'
+import { createMemo } from 'solid-js'
 import type { ProjectsStore } from './projects.js'
 
 export type ChatEntry = {
@@ -17,6 +18,7 @@ export type ChatEntry = {
 export function createChatStore(projectId: () => string | undefined, projects: ProjectsStore) {
   const [entries, setEntries] = createSignal<ChatEntry[]>([])
   const [busy, setBusy] = createSignal(false)
+  const [waiting, setWaiting] = createSignal(false)
   const [error, setError] = createSignal<string | null>(null)
   let loadedFor: string | undefined
 
@@ -73,6 +75,7 @@ export function createChatStore(projectId: () => string | undefined, projects: P
           return
         }
         case 'message-text':
+          if (event.text.trim() !== '') setWaiting(false)
           upsert({ id: event.messageId, role: 'assistant', text: event.text })
           return
         case 'message-completed':
@@ -91,11 +94,34 @@ export function createChatStore(projectId: () => string | undefined, projects: P
           projects.refresh()
           return
         case 'runtime-error':
+          setWaiting(false)
           setError(event.error)
           return
       }
     }),
   )
+
+  /**
+   * True while the agent is working on the CURRENT turn but has not
+   * streamed any assistant text yet — drives the "Thinking…" indicator.
+   * Only entries after the last user message count (old history must not
+   * suppress it).
+   */
+  const thinking = createMemo(() => {
+    if (!waiting()) return false
+    const list = entries()
+    let lastUser = -1
+    for (let i = list.length - 1; i >= 0; i -= 1) {
+      if (list[i]?.role === 'user') {
+        lastUser = i
+        break
+      }
+    }
+    if (lastUser === -1) return true
+    return list
+      .slice(lastUser + 1)
+      .every((entry) => entry.role !== 'assistant' || entry.text.trim() === '')
+  })
 
   async function send(text: string): Promise<void> {
     const id = projectId()
@@ -103,10 +129,12 @@ export function createChatStore(projectId: () => string | undefined, projects: P
     setError(null)
     upsert({ id: `local-${crypto.randomUUID()}`, role: 'user', text })
     setBusy(true)
+    setWaiting(true)
     try {
       await window.studio.chat.send(id, text)
     } catch (cause) {
       setBusy(false)
+      setWaiting(false)
       setError(cause instanceof Error ? cause.message : String(cause))
     }
   }
@@ -116,9 +144,10 @@ export function createChatStore(projectId: () => string | undefined, projects: P
     if (!id) return
     await window.studio.chat.stop(id)
     setBusy(false)
+    setWaiting(false)
   }
 
-  return { entries, busy, error, send, stop }
+  return { entries, busy, thinking, error, send, stop }
 }
 
 export type ChatStore = ReturnType<typeof createChatStore>

@@ -114,6 +114,8 @@ export class OpenCodeRuntime implements CodingAgentRuntime {
   private disposed = false
   private listeners = new Set<(event: RuntimeEvent) => void>()
   private readonly startedMessages = new Set<string>()
+  /** Message id → role, so only assistant text streams to the UI. */
+  private readonly messageRoles = new Map<string, 'user' | 'assistant'>()
   private streamAbort?: AbortController
   private starting?: Promise<string>
 
@@ -290,6 +292,7 @@ export class OpenCodeRuntime implements CodingAgentRuntime {
         const key = `${info.sessionID}:${info.id}`
         if (!this.startedMessages.has(key)) {
           this.startedMessages.add(key)
+          this.messageRoles.set(info.id, info.role)
           this.emit({
             type: 'message-started',
             sessionId: info.sessionID,
@@ -317,7 +320,9 @@ export class OpenCodeRuntime implements CodingAgentRuntime {
       }
       case 'message.part.updated': {
         const part = props.part
-        if (part?.type === 'text' && part.text !== '') {
+        // Only assistant text streams into the chat; user-message echoes
+        // would falsely signal that a reply has arrived.
+        if (part?.type === 'text' && part.text !== '' && this.messageRoles.get(part.messageID) === 'assistant') {
           this.emit({
             type: 'message-text',
             sessionId: part.sessionID,

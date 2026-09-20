@@ -26,16 +26,36 @@ export function ChatPanel(props: { store: ChatStore; projectId: Accessor<string 
     <div class="chat-panel">
       <div class="chat-list" ref={listRef}>
         <For each={props.store.entries()}>
-          {(entry) => (
-            <div class={`chat-message chat-${entry.role}`}>
-              <div class="chat-bubble">
-                <Show when={entry.model}>{(model) => <div class="chat-model">{model()}</div>}</Show>
-                <div class="chat-text">{entry.text}</div>
-                <Show when={entry.error}>{(error) => <div class="chat-error">{error()}</div>}</Show>
+          {(entry, index) => {
+            const entries = props.store.entries
+            const isStreaming =
+              props.store.busy() &&
+              entry.role === 'assistant' &&
+              entry.text.trim() !== '' &&
+              index() === entries().length - 1
+            return (
+              <div class={`chat-message chat-${entry.role}`}>
+                <div class="chat-bubble">
+                  <Show when={entry.model}>{(model) => <div class="chat-model">{model()}</div>}</Show>
+                  <div class={`chat-text ${isStreaming ? 'chat-text-streaming' : ''}`}>{entry.text}</div>
+                  <Show when={entry.error}>{(error) => <div class="chat-error">{error()}</div>}</Show>
+                </div>
               </div>
-            </div>
-          )}
+            )
+          }}
         </For>
+        <Show when={props.store.thinking()}>
+          <div class="chat-message chat-assistant">
+            <div class="chat-bubble chat-thinking" data-testid="chat-thinking">
+              <span class="chat-thinking-label">Thinking</span>
+              <span class="dots" aria-hidden="true">
+                <span />
+                <span />
+                <span />
+              </span>
+            </div>
+          </div>
+        </Show>
         <Show when={props.store.entries().length === 0}>
           <div class="chat-empty muted">
             Ask the agent to do something in this project. Substantial requests will create a task
