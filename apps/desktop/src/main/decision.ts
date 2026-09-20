@@ -39,7 +39,7 @@ export class RuleBasedEngine implements DecisionEngine {
   }
 }
 
-/** Jev via an OpenRouter-compatible chat-completions endpoint. */
+/** Jev via the TypeSafe AI System One API (typed decisions, not chat). */
 export class JevEngine implements DecisionEngine {
   constructor(
     private readonly deps: {
@@ -63,7 +63,7 @@ export class JevEngine implements DecisionEngine {
     const timeout = setTimeout(() => controller.abort(), 15_000)
     try {
       const response = await this.deps.fetchImpl(
-        `${settings.baseUrl.replace(/\/+$/, '')}/chat/completions`,
+        `${settings.baseUrl.replace(/\/+$/, '')}/systemone`,
         {
           method: 'POST',
           headers: {
@@ -71,41 +71,44 @@ export class JevEngine implements DecisionEngine {
             ...(apiKey !== undefined ? { Authorization: `Bearer ${apiKey}` } : {}),
           },
           body: JSON.stringify({
+            state: input.text.slice(0, 4000),
             model: settings.model,
-            messages: [
-              {
-                role: 'system',
-                content:
-                  'You advise a coding harness. Answer ONLY with json: {"tier":"fast"|"quality","confidence":0..1,"explanation":"..."}. quality for architectural/refactor/multi-file work, fast for small fixes.',
+            questions: {
+              model_tier: {
+                type: 'choice',
+                instructions: 'Which model tier should handle this request?',
+                criteria: {
+                  fast: 'Small fix, single file, low risk',
+                  quality: 'Structural work, multiple files, higher risk',
+                },
               },
-              { role: 'user', content: input.text.slice(0, 4000) },
-            ],
+            },
           }),
           signal: controller.signal,
         },
       )
       if (!response.ok) throw new Error(`Jev HTTP ${response.status}`)
       const body = (await response.json()) as {
-        choices?: { message?: { content?: string } }[]
+        answers?: {
+          model_tier?: {
+            choice?: string
+            confidence?: number
+          }
+        }
       }
-      const content = body.choices?.[0]?.message?.content ?? ''
-      const parsed = JSON.parse(content) as {
-        tier?: string
-        confidence?: number
-        explanation?: string
-      }
-      const confidence = typeof parsed.confidence === 'number' ? parsed.confidence : 0
-      if (parsed.tier !== 'fast' && parsed.tier !== 'quality') {
+      const answer = body.answers?.model_tier
+      const confidence = typeof answer?.confidence === 'number' ? answer.confidence : 0
+      if (answer?.choice !== 'fast' && answer?.choice !== 'quality') {
         throw new Error('Jev returned an unusable tier')
       }
       if (confidence < this.deps.minConfidence) {
         throw new Error(`Jev confidence ${confidence} below threshold ${this.deps.minConfidence}`)
       }
       return {
-        value: { tier: parsed.tier },
+        value: { tier: answer.choice },
         confidence,
         provider: 'jev',
-        explanation: parsed.explanation,
+        explanation: `System One choice, confidence ${confidence}`,
       }
     } finally {
       clearTimeout(timeout)

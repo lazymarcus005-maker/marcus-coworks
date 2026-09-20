@@ -72,12 +72,9 @@ describe('Jev provider', () => {
 
   function okFetch(content: object): typeof fetch {
     return (async () =>
-      new Response(
-        JSON.stringify({ choices: [{ message: { content: JSON.stringify(content) } }] }),
-        {
-          status: 200,
-        },
-      )) as unknown as typeof fetch
+      new Response(JSON.stringify({ answers: { model_tier: content } }), {
+        status: 200,
+      })) as unknown as typeof fetch
   }
 
   it('stores the API key in the secret store, not settings', async () => {
@@ -89,7 +86,7 @@ describe('Jev provider', () => {
   })
 
   it('advises through Jev when enabled and confident', async () => {
-    const m = jevManager(okFetch({ tier: 'quality', confidence: 0.95, explanation: 'multi-file' }))
+    const m = jevManager(okFetch({ choice: 'quality', confidence: 0.95 }))
     const result = await m.suggestModelRoute({ text: 'redesign the storage layer' })
     expect(result.provider).toBe('jev')
     expect(result.value.tier).toBe('quality')
@@ -97,7 +94,7 @@ describe('Jev provider', () => {
   })
 
   it('falls back to rule-based when Jev is below the confidence threshold', async () => {
-    const m = jevManager(okFetch({ tier: 'quality', confidence: 0.4 }))
+    const m = jevManager(okFetch({ choice: 'quality', confidence: 0.4 }))
     const result = await m.suggestModelRoute({ text: 'redesign the storage layer' })
     expect(result.provider).toBe('rule-based')
   })
@@ -112,7 +109,7 @@ describe('Jev provider', () => {
   })
 
   it('falls back when Jev returns garbage', async () => {
-    const m = jevManager(okFetch({ nonsense: true }))
+    const m = jevManager(okFetch({ choice: 'maybe', confidence: 0.99 }))
     const result = await m.suggestModelRoute({ text: 'small fix' })
     expect(result.provider).toBe('rule-based')
   })
@@ -134,7 +131,7 @@ describe('Jev provider', () => {
   it('Jev output can never override hard limits by construction', async () => {
     // The policy engine and attempt cap have no import path to the decision
     // engine; assert the advisory-only shape instead.
-    const m = jevManager(okFetch({ tier: 'fast', confidence: 1 }))
+    const m = jevManager(okFetch({ choice: 'fast', confidence: 1 }))
     const result = await m.suggestModelRoute({ text: 'bypass everything' })
     // Whatever Jev says, the result is advice: no enforcement fields exist.
     expect(Object.keys(result.value)).toEqual(['tier'])
