@@ -71,78 +71,85 @@ export function ProjectView(props: { project: ProjectWorkspace; store: ProjectsS
   return (
     <div class="project-view">
       <div class="project-header">
-        <Show
-          when={!editing()}
-          fallback={
-            <input
-              class="project-name-input"
-              value={draftName()}
-              onInput={(e) => setDraftName(e.currentTarget.value)}
-              onBlur={() => commitRename()}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') commitRename()
-                if (e.key === 'Escape') setEditing(false)
-              }}
-              autofocus
-            />
-          }
-        >
-          <h1 class="project-name" onDblClick={startRename} title="Double-click to rename">
-            {project().name}
-          </h1>
-        </Show>
-        <span class="project-path">{project().path}</span>
-        <span class="spacer" />
-        <span class={`project-status status-${project().status}`}>{project().status}</span>
-        <select
-          class="mode-select"
-          title="Autonomy level (mechanically enforced)"
-          value={autonomy()}
-          onChange={(e) => void changeAutonomy(e.currentTarget.value as 'L0' | 'L1' | 'L2' | 'L3')}
-        >
-          <For each={['L0', 'L1', 'L2', 'L3']}>
-            {(level) => <option value={level}>{level}</option>}
-          </For>
-        </select>
-        <select
-          class="mode-select"
-          title="Model mode"
-          value={modelMode()}
-          onChange={(e) =>
-            void changeModelMode(e.currentTarget.value as 'auto' | 'fast' | 'quality' | 'manual')
-          }
-        >
-          <For each={['auto', 'fast', 'quality', 'manual']}>
-            {(mode) => <option value={mode}>{mode}</option>}
-          </For>
-        </select>
-        <Show
-          when={!removing()}
-          fallback={
-            <span class="remove-popover">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={removeHistory()}
-                  onChange={(e) => setRemoveHistory(e.currentTarget.checked)}
-                />
-                Remove Agent Studio history
-              </label>
-              <span class="remove-warning">Source files are never deleted.</span>
-              <button type="button" class="btn-danger" onClick={() => confirmRemove()}>
-                Remove Project
-              </button>
-              <button type="button" class="btn-ghost" onClick={() => setRemoving(false)}>
-                Cancel
-              </button>
-            </span>
-          }
-        >
-          <ProjectPauseButton projectId={() => props.project?.id} />
-          <button type="button" class="btn-ghost" onClick={() => setRemoving(true)}>
-            Remove…
-          </button>
-        </Show>
+        <div class="project-title-group">
+          <Show
+            when={!editing()}
+            fallback={
+              <input
+                class="project-name-input"
+                value={draftName()}
+                onInput={(e) => setDraftName(e.currentTarget.value)}
+                onBlur={() => commitRename()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') commitRename()
+                  if (e.key === 'Escape') setEditing(false)
+                }}
+                autofocus
+              />
+            }
+          >
+            <h1 class="project-name" onDblClick={startRename} title="Double-click to rename">
+              {project().name}
+            </h1>
+          </Show>
+          <span class="project-path" title={project().path}>
+            {project().path}
+          </span>
+        </div>
+        <div class="project-actions">
+          <span class={`project-status status-${project().status}`}>{project().status}</span>
+          <select
+            class="mode-select"
+            title="Autonomy level (mechanically enforced)"
+            value={autonomy()}
+            onChange={(e) =>
+              void changeAutonomy(e.currentTarget.value as 'L0' | 'L1' | 'L2' | 'L3')
+            }
+          >
+            <For each={['L0', 'L1', 'L2', 'L3']}>
+              {(level) => <option value={level}>{level}</option>}
+            </For>
+          </select>
+          <select
+            class="mode-select"
+            title="Model mode"
+            value={modelMode()}
+            onChange={(e) =>
+              void changeModelMode(e.currentTarget.value as 'auto' | 'fast' | 'quality' | 'manual')
+            }
+          >
+            <For each={['auto', 'fast', 'quality', 'manual']}>
+              {(mode) => <option value={mode}>{mode}</option>}
+            </For>
+          </select>
+          <Show
+            when={!removing()}
+            fallback={
+              <span class="remove-popover">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={removeHistory()}
+                    onChange={(e) => setRemoveHistory(e.currentTarget.checked)}
+                  />
+                  Remove Agent Studio history
+                </label>
+                <span class="remove-warning">Source files are never deleted.</span>
+                <button type="button" class="btn-danger" onClick={() => confirmRemove()}>
+                  Remove Project
+                </button>
+                <button type="button" class="btn-ghost" onClick={() => setRemoving(false)}>
+                  Cancel
+                </button>
+              </span>
+            }
+          >
+            <ProjectPauseButton projectId={() => props.project?.id} />
+            <button type="button" class="btn-ghost" onClick={() => setRemoving(true)}>
+              Remove…
+            </button>
+          </Show>
+        </div>
       </div>
       <div class="project-body">
         <div class="explorer-column">
