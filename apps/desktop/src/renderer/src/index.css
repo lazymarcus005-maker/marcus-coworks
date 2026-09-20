@@ -1140,3 +1140,18 @@ body {
   flex: 1 1 200px;
   min-width: 0;
 }
+
+/* macOS traffic lights sit at x=16..~76 over the draggable header —
+   keep the app title clear of them (measured overlap at 20px padding). */
+.app-header {
+  padding-left: 84px;
+  padding-right: 20px;
+  gap: 12px;
+}
+
+.app-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
