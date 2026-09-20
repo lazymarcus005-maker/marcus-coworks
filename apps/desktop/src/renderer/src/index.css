@@ -1155,3 +1155,132 @@ body {
   text-overflow: ellipsis;
   min-width: 0;
 }
+
+/* ============================================================
+   Tabs bar polish — single row, pill tabs, clean + button.
+   ============================================================ */
+
+.tabs-bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  height: 40px;
+  padding: 4px 12px 0 12px;
+  gap: 6px;
+}
+
+.tabs-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  min-width: 0;
+  flex: 0 1 auto;
+  scrollbar-width: none;
+}
+
+.tabs-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tabs-add-menu {
+  flex: none;
+  display: inline-flex;
+  position: relative;
+}
+
+.tabs-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  list-style: none;
+  user-select: none;
+}
+
+.tabs-add::-webkit-details-marker {
+  display: none;
+}
+
+.tabs-add:hover {
+  color: var(--text);
+  border-color: var(--text-muted);
+}
+
+.tabs-add-menu[open] .tabs-add {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #10101a;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 6px 0 12px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  outline: none;
+}
+
+.tab:hover {
+  background: var(--bg-elevated);
+  color: var(--text);
+}
+
+.tab-active,
+.tab-active:hover {
+  background: var(--bg-elevated);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.tab-name {
+  max-width: 180px;
+}
+
+.tab-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--text-muted);
+  opacity: 0.65;
+  flex: none;
+}
+
+.tab:hover .tab-close {
+  opacity: 1;
+}
+
+.tab-close:hover {
+  background: rgba(247, 118, 142, 0.15);
+  color: var(--err);
+  opacity: 1;
+}
